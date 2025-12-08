@@ -23,3 +23,10 @@ class Item(BaseModel):
     name: str
     quantity: int
 
+
+@router.post("/items", summary="Cria um item de exemplo")
+def create_item(item: Item):
+    return {
+        "message": "Item criado com sucesso",
+        "item": item,
+    }
