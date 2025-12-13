@@ -1,0 +1,44 @@
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from validacao_de_dados import validar_dados_fisioterapeuta
+
+def test_cadastro_fisioterapeuta_dados_validos_sao_aceitos():
+    dados = {
+        "nome": "Ana Silva",
+        "cpf": "12345678901",
+        "cnpj": "",
+        "registro": "CREFITO 12345-F",
+        "email": "ana@clinica.com",
+    }   
+
+    erros = validar_dados_fisioterapeuta(dados)
+
+    assert erros == []
+
+def test_cadastro_fisioterapeuta_nome_obrigatorio():
+    dados = {
+        "nome": "",
+        "cpf": "12345678901",
+        "cnpj": "",
+        "registro": "CREFITO 12345-F",
+        "email": "ana@clinica.com",
+    }
+    erros = validar_dados_fisioterapeuta(dados)
+
+    assert "Nome é obrigatório." in erros
+
+def test_cadastro_fisioterapeuta_cpf_invalido():
+    dados = {
+        "nome": "Ana Silva",
+        "cpf": "1234",  #CPFinvalido
+
+        "cnpj": "",
+        "registro": "CREFITO 12345-F",
+        "email": "ana@clinica.com",
+    }
+
+    erros = validar_dados_fisioterapeuta(dados)
+
+    assert "CPF inválido" in erros
