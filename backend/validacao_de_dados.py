@@ -17,4 +17,26 @@ def validar_dados_fisioterapeuta(dados):
     elif len(cpf_numeros) != 11:
         erros.append("CPF inválido")
 
-    return erros
+    # --- validação do email ---
+    email = dados.get("email", "")
+    if not email or email.strip() == "":
+        erros.append("Email é obrigatório.")      
+    elif "@" not in email or "." not in email:
+        erros.append("Email inválido.")  
+
+    # --- validação do REGISTRO (CREFITO/COFFITO) ---
+    registro = dados.get("registro", "")
+
+    if not registro or registro.strip() == "":
+        erros.append("Registro é obrigatório.")
+    else:
+        registro_limpo = registro.strip().upper()
+
+        if not (
+            registro_limpo.startswith("CREFITO")
+            or registro_limpo.startswith("COFFITO")
+        ):
+            erros.append("Registro inválido.")
+
+    return erros        
+       

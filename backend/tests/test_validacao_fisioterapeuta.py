@@ -42,3 +42,56 @@ def test_cadastro_fisioterapeuta_cpf_invalido():
     erros = validar_dados_fisioterapeuta(dados)
 
     assert "CPF inválido" in erros
+
+    
+def teste_cadastro_fisioterapeuta_email_obrigatorio():
+    dados = {
+        "nome": "Ana Silva",
+        "cpf": "12345678901",
+        "cnpj": "",
+        "registro": "CREFITO 12345-F",
+        "email": "anaclinica.com",
+    }
+    erros = validar_dados_fisioterapeuta(dados)
+
+    assert "Email inválido." in erros      
+
+def test_cadastro_fisioterapeuta_email_obrigatorio():
+    dados = {
+        "nome": "Ana Silva",
+        "cpf": "12345678901",
+        "cnpj": "",
+        "registro": "CREFITO 12345-F",
+        "email": "",  # VAZIO aqui
+    }
+    erros = validar_dados_fisioterapeuta(dados)
+
+    assert "Email é obrigatório." in erros
+
+def test_cadastro_fisioterapeuta_registro_obrigatorio():
+    dados = {
+        "nome": "Ana Silva",
+        "cpf": "12345678901",
+        "cnpj": "",
+        "registro": "",  # vazio de propósito
+        "email": "ana@clinica.com",
+    }
+
+    erros = validar_dados_fisioterapeuta(dados)
+
+    assert "Registro é obrigatório." in erros
+    
+def test_cadastro_fisioterapeuta_registro_invalido():
+    dados = {
+        "nome": "Ana Silva",
+        "cpf": "12345678901",
+        "cnpj": "",
+        "registro": "12345",  # não tem CREFITO nem COFFITO
+        "email": "ana@clinica.com",
+    }
+
+    erros = validar_dados_fisioterapeuta(dados)
+
+    assert "Registro inválido." in erros
+
+
