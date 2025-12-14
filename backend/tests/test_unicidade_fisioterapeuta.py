@@ -1,0 +1,84 @@
+﻿import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from cadastro_fisioterapeuta import cadastrar_fisioterapeuta
+
+class FakeRepositorioFisio:
+
+    def __init__(self, existentes = None):
+        self.cpfs_existentes = set(existentes or [])
+        self.emails_existentes = set(existentes or [])
+        self.salvou = False 
+
+    def existe_cpf(self, cpf):
+        return cpf in self.cpfs_existentes
+    
+    def existe_email(self, email):
+        return email in self.emails_existentes
+    
+    def salvar(self, dados):
+        self.salvou = True
+
+    
+def test_deve_recusar_quando_cpf_ja_existente():
+    cpf_duplicado = "52998224725"
+    repo = FakeRepositorioFisio(existentes=[cpf_duplicado])
+
+    dados = {
+        "nome": "João Pereira",
+        "cpf": cpf_duplicado,
+        "registro": "CREFITO 12345-F",
+        "email": "ana@exemplo.com",
+
+    }   
+
+    erros = cadastrar_fisioterapeuta(dados, repo)
+
+    assert "CPF já cadastrado." in erros
+    assert repo.salvou is False
+
+def test_deve_recusar_quando_email_ja_existente():
+    email_duplicado = "ana@exemplo.com"
+    repo = FakeRepositorioFisio(existentes=[email_duplicado])
+    dados = {
+        "nome": "Ana Silva",
+        "cpf": "12345678901",
+        "registro": "CREFITO 54321-F",
+        "email": email_duplicado,
+    }
+
+    erros = cadastrar_fisioterapeuta(dados, repo)
+    assert "Email já cadastrado." in erros
+    assert repo.salvou is False
+
+def test_deve_salvar_quando_dados_validos_e_sem_duplicidades():
+    repo = FakeRepositorioFisio()
+
+    dados = {
+        "nome": "Ana Fisioterapeuta",
+        "cpf": "98765432100",
+        "registro": "CREFITO 67890-F",  
+        "email": "ana@clinica.com",
+        "cnpj": "",
+    }
+    erros = cadastrar_fisioterapeuta(dados, repo)
+    assert erros == []
+    assert repo.salvou is True
+
+def test_nao_deve_salvar_quando_validacao_falhar():
+    repo = FakeRepositorioFisio()  # repositório vazio
+
+    dados = {
+        "nome": "",                  # inválido de propósito
+        "cpf": "1234",               # também inválido
+        "registro": "CREFITO 12345-F",
+        "email": "ana@clinica.com",
+        "cnpj": "",
+    }
+
+    erros = cadastrar_fisioterapeuta(dados, repo)
+
+    
+    assert len(erros) > 0
+    assert repo.salvou is False
