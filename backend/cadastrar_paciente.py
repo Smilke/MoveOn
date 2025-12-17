@@ -13,6 +13,7 @@ def cadastrar_paciente(dados, fisioterapeuta_id, repositorio):
 
     dados_para_salvar = dict(dados)
     dados_para_salvar["fisioterapeuta_id"] = fisioterapeuta_id
+    
 
     repositorio.salvar(dados_para_salvar)
     return []    
