@@ -6,6 +6,8 @@ from app.api.routes_health import router as health_router
 from app.api.routes_fisioterapeuta import router as fisioterapeuta_router  
 from app.api.routes_fisioterapeuta import router as fisio_router
 from app.api.routes_paciente import router as paciente_router
+from app.api.routes_notificacoes import router as notificacoes_router
+
 
 
 
@@ -62,6 +64,13 @@ def create_app() -> FastAPI:
         prefix=api_prefix,
         tags=["pacientes"],
     )
+
+    app.include_router(
+        notificacoes_router,
+        prefix=api_prefix,
+        tags=["notificacoes"],
+    )
+
 
 
     return app
