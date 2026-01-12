@@ -4,12 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.routes_health import router as health_router
 from app.api.routes_fisioterapeuta import router as fisioterapeuta_router  
-from app.api.routes_fisioterapeuta import router as fisio_router
 from app.api.routes_paciente import router as paciente_router
 from app.api.routes_notificacoes import router as notificacoes_router
-
-
-
+from app.api.routes_metas import router as metas_router
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME)
@@ -39,7 +36,7 @@ def create_app() -> FastAPI:
     def root():
         return {"message": "API rodando", "project": settings.PROJECT_NAME}
     
-    api_prefix = settings.API_PREFIX  # normalmente é "/api"
+    api_prefix = settings.API_PREFIX  
 
     app.include_router(
         health_router,
@@ -71,6 +68,12 @@ def create_app() -> FastAPI:
         tags=["notificacoes"],
     )
 
+
+    app.include_router(
+        metas_router,
+        prefix=api_prefix,
+        tags=["metas"],
+    )
 
 
     return app
