@@ -6,6 +6,8 @@ from app.api.routes_health import router as health_router
 from app.api.routes_fisioterapeuta import router as fisioterapeuta_router  
 from app.api.routes_fisioterapeuta import router as fisio_router
 from app.api.routes_paciente import router as paciente_router
+from app.api.routes_metas import router as metas_router
+
 
 
 
@@ -61,6 +63,12 @@ def create_app() -> FastAPI:
         paciente_router,
         prefix=api_prefix,
         tags=["pacientes"],
+    )
+
+    app.include_router(
+        metas_router,
+        prefix=api_prefix,
+        tags=["metas"],
     )
 
 
