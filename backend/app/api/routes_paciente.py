@@ -3,12 +3,11 @@ from pydantic import BaseModel
 import sys
 from pathlib import Path
 
-# permite importar arquivos da pasta backend
+# permite importar módulos da pasta backend
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from cadastrar_paciente import cadastrar_paciente
-from repositorio_memoria import repo_paciente_memoria as repo_paciente
-
+from repositorio_memoria import repo_paciente_memoria, repo_fisio_memoria
 
 router = APIRouter()
 
@@ -18,24 +17,26 @@ class PacienteIn(BaseModel):
     cpf: str
     idade: int
     situacao: str | None = "em tratamento"
-    fisioterapeuta_id: str       # ID/CPF do fisio que cadastrou
-    email: str                   # 🔹 necessário pro login do paciente
-    senha: str                   # 🔹 será transformada em senha_hash
+    fisioterapeuta_id: str   # CPF do fisioterapeuta
+    email: str
+    senha: str
 
 
 @router.post("/pacientes", status_code=status.HTTP_201_CREATED)
 def criar_paciente(body: PacienteIn):
     """
-    Rota de cadastro de paciente (PB02).
-
-    Caminho final: {API_PREFIX}/pacientes
-
-    - Vincula o paciente ao fisioterapeuta_id recebido
-    - Gera hash da senha (em cadastrar_paciente)
-    - Usa repo_paciente_memoria, o mesmo que o login enxerga
+    Cadastro de paciente (PB02) já vinculado a um fisioterapeuta.
+    Agora também valida se o CPF do fisioterapeuta existe.
     """
 
-    # monta o dicionário que será validado e salvo
+    # 1) Verificar se o fisioterapeuta existe
+    if not repo_fisio_memoria.existe_cpf(body.fisioterapeuta_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=["Fisioterapeuta não encontrado para esse CPF."],
+        )
+
+    # 2) Montar os dados do paciente (sem fisioterapeuta_id ainda)
     dados = {
         "nome": body.nome,
         "cpf": body.cpf,
@@ -45,7 +46,8 @@ def criar_paciente(body: PacienteIn):
         "senha": body.senha,
     }
 
-    erros = cadastrar_paciente(dados, body.fisioterapeuta_id, repo_paciente)
+    # 3) Chamar a função de cadastro de paciente
+    erros = cadastrar_paciente(dados, body.fisioterapeuta_id, repo_paciente_memoria)
 
     if erros:
         raise HTTPException(
@@ -53,4 +55,4 @@ def criar_paciente(body: PacienteIn):
             detail=erros,
         )
 
-    return {"mensagem": "Paciente cadastrado com sucesso"}
+    return {"mensagem": "Paciente cadastrado com sucesso."}
