@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Metas dos Pacientes - MoveOn</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 16px 80px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin: 0 0 4px 0;
+    }
+    p.sub {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+    .auth-info {
+      text-align: right;
+      font-size: 0.9rem;
+    }
+    .auth-info span.status {
+      color: #6b7280;
+      display: block;
+    }
+    .auth-info span.nome {
+      font-weight: 600;
+      display: block;
+    }
+    .btn-sair {
+      margin-top: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-sair:hover {
+      background: #fecaca;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 1.3rem;
+    }
+    .card p {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #4b5563;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+    input, textarea, select {
+      width: 100%;
+      margin-top: 4px;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px #2563eb33;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .lista-metas {
+      font-size: 0.95rem;
+      color: #4b5563;
+      margin-top: 8px;
+    }
+    .meta-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .meta-item:last-child {
+      border-bottom: none;
+    }
+    .meta-status {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .msg {
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .msg.err { color: #dc2626; }
+    .msg.ok  { color: #16a34a; }
+
+    .top-link {
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .top-link:hover {
+      text-decoration: underline;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <a href="fisio_area.html" class="top-link">← Voltar para a área do fisioterapeuta</a>
+        <h1>Metas dos Pacientes</h1>
+        <p class="sub">
+          Defina novas metas e acompanhe a evolução de cada paciente.
+        </p>
+      </div>
+
+      <div class="auth-info">
+        <span class="status" id="status-autenticacao">Não autenticado</span>
+        <span class="nome" id="nome-fisio"></span>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <!-- Coluna esquerda: formulário de criação -->
+      <article class="card">
+        <h2>Cadastrar nova meta</h2>
+        <p>Preencha os dados abaixo para criar uma meta para um paciente.</p>
+
+        <label for="pacienteId">CPF do paciente</label>
+        <input type="text" id="pacienteId" placeholder="Somente números" />
+
+        <label for="descricao">Descrição da meta</label>
+        <textarea id="descricao" placeholder="Ex.: Realizar exercícios 5x por semana."></textarea>
+
+        <label for="criterio">Critério de sucesso</label>
+        <input
+          type="text"
+          id="criterio"
+          placeholder="Ex.: Manter média de dor &le; 3 em 4 semanas."
+        />
+
+        <label for="dataInicio">Data de início</label>
+        <input type="date" id="dataInicio" />
+
+        <label for="dataFim">Data de término</label>
+        <input type="date" id="dataFim" />
+
+        <button class="btn-primary" onclick="criarMeta()">Criar meta</button>
+
+        <div id="mensagem-criacao" class="msg"></div>
+      </article>
+
+      <!-- Coluna direita: lista de metas do paciente -->
+      <article class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h2>Metas do paciente</h2>
+          <button class="btn-primary" style="padding:6px 14px;font-size:0.85rem;" onclick="carregarMetas()">
+            Atualizar lista
+          </button>
+        </div>
+
+        <p style="margin-top:0;margin-bottom:8px;font-size:0.9rem;color:#6b7280;">
+          A lista considera o CPF informado acima. Altere o CPF e clique em “Atualizar lista”.
+        </p>
+
+        <div id="lista-metas" class="lista-metas">
+          Informe o CPF do paciente e clique em “Atualizar lista”.
+        </div>
+        <div id="mensagem-lista" class="msg"></div>
+      </article>
+    </section>
+
+    <footer>
+      Protótipo de navegação — uso interno do time MoveOn.
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    function obterUsuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Erro ao ler usuário logado:", e);
+        return null;
+      }
+    }
+
+    function atualizarHeader() {
+      const usuario = obterUsuarioLogado();
+      const statusEl = document.getElementById("status-autenticacao");
+      const nomeEl = document.getElementById("nome-fisio");
+
+      if (!usuario || usuario.tipo !== "fisioterapeuta") {
+        statusEl.textContent = "Não autenticado";
+        nomeEl.textContent = "";
+        return;
+      }
+
+      statusEl.textContent = "Logado como:";
+      nomeEl.textContent = usuario.nome || "";
+    }
+
+    function sair() {
+      localStorage.removeItem("moveon_usuario_logado");
+      window.location.href = "login.html";
+    }
+
+    // -------- Criar meta (POST /api/metas) --------
+    async function criarMeta() {
+      const usuario = obterUsuarioLogado();
+      const msgEl = document.getElementById("mensagem-criacao");
+
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+
+      if (!usuario || usuario.tipo !== "fisioterapeuta") {
+        msgEl.textContent = "Você precisa estar logado como fisioterapeuta para criar metas.";
+        msgEl.classList.add("err");
+        return;
+      }
+
+      const pacienteId = document.getElementById("pacienteId").value.trim();
+      const descricao = document.getElementById("descricao").value.trim();
+      const criterio = document.getElementById("criterio").value.trim();
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
+
+      if (!pacienteId || !descricao || !criterio || !dataInicio || !dataFim) {
+        msgEl.textContent = "Preencha todos os campos para criar a meta.";
+        msgEl.classList.add("err");
+        return;
+      }
+
+      // corpo exatamente como o Swagger mostrou
+      const body = {
+        paciente_id: pacienteId,
+        fisioterapeuta_id: usuario.cpf,  // fisio logado
+        descricao: descricao,
+        criterio_sucesso: criterio,
+        data_inicio: dataInicio,
+        data_fim: dataFim
+      };
+
+      try {
+        const resp = await fetch(`${API_BASE}/metas`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        const data = await resp.json().catch(() => null);
+
+        if (!resp.ok) {
+          console.error("Erro ao criar meta:", resp.status, data);
+          msgEl.textContent =
+            (data && data.detail) || `Erro ao criar meta (${resp.status}).`;
+          msgEl.classList.add("err");
+          return;
+        }
+
+        msgEl.textContent = "Meta criada com sucesso!";
+        msgEl.classList.add("ok");
+
+        // recarrega lista para ver a meta nova
+        await carregarMetas();
+
+      } catch (err) {
+        console.error("Erro inesperado ao criar meta:", err);
+        msgEl.textContent = "Erro inesperado ao criar meta (veja o console).";
+        msgEl.classList.add("err");
+      }
+    }
+
+    // -------- Listar metas do paciente (GET /api/pacientes/{id}/metas) --------
+    async function carregarMetas() {
+      const pacienteId = document.getElementById("pacienteId").value.trim();
+      const listaEl = document.getElementById("lista-metas");
+      const msgEl = document.getElementById("mensagem-lista");
+
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+
+      if (!pacienteId) {
+        listaEl.textContent = "Informe o CPF do paciente para ver as metas.";
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${API_BASE}/pacientes/${pacienteId}/metas`);
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => null);
+          console.error("Erro ao buscar metas:", resp.status, data);
+          listaEl.textContent = "Erro ao carregar metas.";
+          msgEl.textContent =
+            (data && data.detail) || "Verifique o backend ou o CPF informado.";
+          msgEl.classList.add("err");
+          return;
+        }
+
+        const metas = await resp.json();
+
+        if (!Array.isArray(metas) || metas.length === 0) {
+          listaEl.textContent = "Nenhuma meta cadastrada para esse paciente.";
+          return;
+        }
+
+        listaEl.innerHTML = "";
+        metas.forEach((m) => {
+          const div = document.createElement("div");
+          div.className = "meta-item";
+          div.innerHTML = `
+            <strong>${m.descricao || "Meta"}</strong><br>
+            Critério: ${m.criterio_sucesso || "-"}<br>
+            Período: ${m.data_inicio || "-"} até ${m.data_fim || "-"}<br>
+            <span class="meta-status">${m.status || "sem status"}</span>
+          `;
+          listaEl.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao buscar metas:", err);
+        listaEl.textContent = "Erro inesperado ao carregar metas.";
+        msgEl.textContent = "Veja o console para mais detalhes.";
+        msgEl.classList.add("err");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      atualizarHeader();
+    });
+  </script>
+</body>
+</html>

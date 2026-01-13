@@ -2,7 +2,6 @@
 
 class RepositorioFisioMemoria:
     def __init__(self):
-        # lista de dicionários com dados dos fisioterapeutas
         self._fisioterapeutas = []
 
     def existe_cpf(self, cpf: str) -> bool:
@@ -14,17 +13,15 @@ class RepositorioFisioMemoria:
     def salvar(self, dados: dict):
         self._fisioterapeutas.append(dados)
 
+    def listar_todos(self):
+        return list(self._fisioterapeutas)
 
-# 🔹 repositório em memória de pacientes
+
 class RepositorioPacienteMemoria:
     def __init__(self):
-        # lista de dicionários com dados dos pacientes
         self._pacientes = []
 
     def existe_paciente(self, cpf: str, fisioterapeuta_id: str) -> bool:
-        """
-        Verifica se já existe paciente com esse CPF vinculado ao mesmo fisioterapeuta.
-        """
         return any(
             p.get("cpf") == cpf and p.get("fisioterapeuta_id") == fisioterapeuta_id
             for p in self._pacientes
@@ -32,6 +29,15 @@ class RepositorioPacienteMemoria:
 
     def salvar(self, dados: dict):
         self._pacientes.append(dados)
+
+    def listar_por_fisio(self, fisio_cpf: str):
+        return [
+            p for p in self._pacientes
+            if p.get("fisioterapeuta_id") == fisio_cpf
+        ]
+
+    def listar_todos(self):
+        return list(self._pacientes)
 
 
 class RepositorioNotificacaoMemoria:
@@ -86,6 +92,39 @@ class RepositorioMetaMemoria:
                 return m
         return None
 
+class RepositorioFeedbackMemoria:
+    def __init__(self):
+        self._feedbacks = []
+        self._proximo_id = 1
+
+    def salvar(self, feedback: dict):
+        """Salva um feedback em memória e retorna o dict com ID."""
+        fb = feedback.copy()
+        fb["id"] = self._proximo_id
+        self._proximo_id += 1
+
+        self._feedbacks.append(fb)
+        return fb
+
+    def listar_por_paciente(self, paciente_id: str):
+        """Lista feedbacks de um paciente específico."""
+        return [
+            f for f in self._feedbacks
+            if f.get("paciente_id") == paciente_id
+        ]
+
+    def listar_por_fisioterapeuta(self, fisioterapeuta_id: str):
+        """Lista feedbacks recebidos por um fisioterapeuta."""
+        return [
+            f for f in self._feedbacks
+            if f.get("fisioterapeuta_id") == fisioterapeuta_id
+        ]
+
+
+# instância global
+repo_feedback_memoria = RepositorioFeedbackMemoria()
 
 repo_fisio_memoria = RepositorioFisioMemoria()
 repo_paciente_memoria = RepositorioPacienteMemoria()
+repo_notificacao_memoria = RepositorioNotificacaoMemoria()
+repo_meta_memoria = RepositorioMetaMemoria()

@@ -17,7 +17,7 @@ class PacienteIn(BaseModel):
     cpf: str
     idade: int
     situacao: str | None = "em tratamento"
-    fisioterapeuta_id: str   # CPF do fisioterapeuta
+    fisioterapeuta_id: str   
     email: str
     senha: str
 
@@ -56,3 +56,22 @@ def criar_paciente(body: PacienteIn):
         )
 
     return {"mensagem": "Paciente cadastrado com sucesso."}
+
+@router.get("/fisioterapeutas/{fisioterapeuta_id}/pacientes")
+def listar_pacientes_do_fisio(fisioterapeuta_id: str):
+    """
+    Retorna todos os pacientes vinculados ao fisioterapeuta informado (CPF).
+    Usado na Área do Fisioterapeuta no HTML.
+    """
+    pacientes_do_fisio = [
+        {
+            "nome": p.get("nome"),
+            "cpf": p.get("cpf"),
+            "idade": p.get("idade"),
+            "situacao": p.get("situacao"),
+        }
+        for p in repo_paciente_memoria._pacientes
+        if p.get("fisioterapeuta_id") == fisioterapeuta_id
+    ]
+
+    return pacientes_do_fisio

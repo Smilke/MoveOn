@@ -133,14 +133,15 @@
     async function fazerLogin() {
       const email = document.getElementById("email").value.trim();
       const senha = document.getElementById("senha").value.trim();
-      const msgErro = document.getElementById("mensagem-erro");
+      const msgEl = document.getElementById("mensagem-erro"); // <- ID certo
 
-      msgErro.style.display = "none";
-      msgErro.textContent = "";
+      // limpa mensagem
+      msgEl.style.display = "none";
+      msgEl.textContent = "";
 
       if (!email || !senha) {
-        msgErro.textContent = "Preencha e-mail e senha.";
-        msgErro.style.display = "block";
+        msgEl.textContent = "Informe e-mail e senha.";
+        msgEl.style.display = "block";
         return;
       }
 
@@ -154,29 +155,32 @@
         const data = await resp.json();
 
         if (!resp.ok) {
-          msgErro.textContent = data.detail || "Falha ao fazer login.";
-          msgErro.style.display = "block";
+          console.error("Erro no login:", data);
+          msgEl.textContent =
+            (data && data.detail) || "Falha ao efetuar login.";
+          msgEl.style.display = "block";
           return;
         }
 
-        // guarda o usuário logado (fisio ou paciente)
-        localStorage.setItem("usuario", JSON.stringify(data));
+        // Salva usuário logado
+        localStorage.setItem("moveon_usuario_logado", JSON.stringify(data));
 
-        // redireciona conforme o tipo
+        // Redireciona conforme o tipo
         if (data.tipo === "fisioterapeuta") {
           window.location.href = "fisio_area.html";
         } else if (data.tipo === "paciente") {
           window.location.href = "paciente_area.html";
         } else {
-          msgErro.textContent = "Tipo de usuário desconhecido.";
-          msgErro.style.display = "block";
+          msgEl.textContent = "Tipo de usuário desconhecido.";
+          msgEl.style.display = "block";
         }
-      } catch (erro) {
-        console.error("Erro ao chamar /login:", erro);
-        msgErro.textContent = "Erro inesperado ao tentar login.";
-        msgErro.style.display = "block";
+      } catch (err) {
+        console.error("Erro inesperado no login:", err);
+        msgEl.textContent = "Erro inesperado no login (veja o console).";
+        msgEl.style.display = "block";
       }
     }
   </script>
+
 </body>
 </html>

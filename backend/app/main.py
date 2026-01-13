@@ -9,6 +9,8 @@ from app.api.routes_notificacoes import router as notificacoes_router
 from app.api.routes_metas import router as metas_router
 from app.api.routes_login import router as login_router
 from app.api.routes_recuperacao_senha import router as recuperacao_router
+from app.api.routes_feedback import router as feedback_router
+
 
 
 def create_app() -> FastAPI:
@@ -83,6 +85,13 @@ def create_app() -> FastAPI:
         prefix=api_prefix,
         tags=["recuperacao_senha"],
 )
+
+    app.include_router(
+        feedback_router,
+        prefix=api_prefix,
+        tags=["feedbacks"],
+)
+
 
 
     return app

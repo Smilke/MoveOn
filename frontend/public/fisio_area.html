@@ -13,59 +13,55 @@
     .page {
       max-width: 960px;
       margin: 40px auto;
-      padding: 0 16px;
+      padding: 0 16px 80px;
     }
     header {
-      margin-bottom: 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .header-top {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 32px;
     }
     h1 {
       font-size: 1.8rem;
-      margin: 0;
+      margin: 0 0 4px 0;
     }
     p.sub {
-      margin-top: 4px;
-      margin-bottom: 0;
+      margin: 0;
       color: #6b7280;
       font-size: 0.95rem;
     }
-    .top-link {
-      font-size: 0.85rem;
-      color: #4b5563;
-      text-decoration: none;
-    }
-    .top-link:hover {
-      text-decoration: underline;
-    }
-    .user-info {
+    .auth-info {
+      text-align: right;
       font-size: 0.9rem;
-      color: #4b5563;
     }
-    .logout-btn {
+    .auth-info span.status {
+      color: #6b7280;
+      display: block;
+    }
+    .auth-info span.nome {
+      font-weight: 600;
+      display: block;
+    }
+    .btn-sair {
+      margin-top: 6px;
       padding: 6px 12px;
       border-radius: 999px;
       border: none;
-      background: #ef4444;
-      color: #ffffff;
+      background: #fee2e2;
+      color: #b91c1c;
       font-size: 0.8rem;
-      font-weight: 600;
       cursor: pointer;
     }
-    .logout-btn:hover {
-      background: #dc2626;
+    .btn-sair:hover {
+      background: #fecaca;
     }
+
     .cards {
       display: flex;
       flex-wrap: wrap;
       gap: 24px;
       justify-content: center;
+      margin-bottom: 32px;
     }
     .card {
       background: #ffffff;
@@ -103,6 +99,42 @@
     .btn-primary:hover {
       background: #1d4ed8;
     }
+
+    .card-wide {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      margin-top: 16px;
+    }
+    .card-wide-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .card-wide h2 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+    .lista-pacientes {
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+    .paciente-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .paciente-item:last-child {
+      border-bottom: none;
+    }
+    .msg {
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .msg.err { color: #dc2626; }
+    .msg.ok  { color: #16a34a; }
+
     footer {
       text-align: center;
       margin-top: 40px;
@@ -114,20 +146,18 @@
 <body>
   <div class="page">
     <header>
-      <div class="header-top">
-        <a href="menu.html" class="top-link">← Voltar para o menu inicial</a>
-        <div>
-          <span class="user-info">
-            Logado como: <strong id="nome-fisio">Fisioterapeuta</strong>
-          </span>
-          <button class="logout-btn" onclick="logout()">Sair</button>
-        </div>
-      </div>
       <div>
         <h1>Área do Fisioterapeuta</h1>
         <p class="sub">
-          Aqui você consegue se cadastrar na plataforma e vincular novos pacientes sob sua responsabilidade.
+          Aqui você consegue se cadastrar na plataforma, vincular pacientes,
+          definir metas e acompanhar o retorno dos seus pacientes.
         </p>
+      </div>
+
+      <div class="auth-info">
+        <span class="status" id="status-autenticacao">Não autenticado</span>
+        <span class="nome" id="nome-fisio"></span>
+        <button class="btn-sair" onclick="sair()">Sair</button>
       </div>
     </header>
 
@@ -144,11 +174,43 @@
       <article class="card">
         <h2>Vincular paciente a um fisioterapeuta</h2>
         <p>
-          Cadastre um novo paciente informando o CPF do fisioterapeuta
-          responsável, vinculando esse paciente diretamente a você.
+          Cadastre um novo paciente informando o CPF do fisioterapeuta responsável,
+          vinculando esse paciente diretamente a você.
         </p>
         <a href="paciente_cadastro.html" class="btn-primary">Cadastrar paciente</a>
       </article>
+
+      <article class="card">
+        <h2>Gerenciar metas dos pacientes</h2>
+        <p>
+          Defina novas metas e atualize o status de cada paciente
+          de acordo com a evolução do tratamento.
+        </p>
+        <a href="fisio_metas.html" class="btn-primary">Abrir metas dos pacientes</a>
+      </article>
+
+      <!-- NOVO CARD: ver feedbacks dos pacientes -->
+      <article class="card">
+        <h2>Ver feedbacks dos pacientes</h2>
+        <p>
+          Visualize os feedbacks enviados pelos pacientes sobre os exercícios
+          e atendimentos realizados.
+        </p>
+        <a href="fisio_feedbacks.html" class="btn-primary">Ver feedbacks</a>
+      </article>
+    </section>
+
+    <section class="card-wide">
+      <div class="card-wide-header">
+        <h2>Meus pacientes cadastrados</h2>
+        <button class="btn-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="carregarPacientes()">
+          Atualizar lista
+        </button>
+      </div>
+      <div id="lista-pacientes" class="lista-pacientes">
+        Não foi possível identificar o fisioterapeuta logado.
+      </div>
+      <div id="mensagem-pacientes" class="msg"></div>
     </section>
 
     <footer>
@@ -157,31 +219,96 @@
   </div>
 
   <script>
-    (function () {
-      // Proteção: só entra se tiver usuário logado
-      const usuarioStr = localStorage.getItem("usuario");
-      if (!usuarioStr) {
-        // ninguém logado → volta pro login
-        window.location.href = "login.html";
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    function obterUsuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Erro ao ler usuário logado do localStorage:", e);
+        return null;
+      }
+    }
+
+    function atualizarHeader() {
+      const usuario = obterUsuarioLogado();
+      const statusEl = document.getElementById("status-autenticacao");
+      const nomeEl = document.getElementById("nome-fisio");
+
+      if (!usuario || usuario.tipo !== "fisioterapeuta") {
+        statusEl.textContent = "Não autenticado";
+        nomeEl.textContent = "";
         return;
       }
 
-      // Se tiver usuário, tenta mostrar o nome no cabeçalho
-      try {
-        const usuario = JSON.parse(usuarioStr);
-        const nomeEl = document.getElementById("nome-fisio");
-        if (nomeEl && usuario.nome) {
-          nomeEl.textContent = usuario.nome;
-        }
-      } catch (e) {
-        console.error("Erro ao ler usuário do localStorage:", e);
-      }
-    })();
-
-    function logout() {
-      localStorage.removeItem("usuario");
-      window.location.href = "login.html";
+      statusEl.textContent = "Logado como:";
+      nomeEl.textContent = usuario.nome || "";
     }
+
+    function sair() {
+      localStorage.removeItem("moveon_usuario_logado");
+      window.location.href = "menu.html";
+    }
+
+    async function carregarPacientes() {
+      const usuario = obterUsuarioLogado();
+      const listaEl = document.getElementById("lista-pacientes");
+      const msgEl = document.getElementById("mensagem-pacientes");
+
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+
+      if (!usuario || usuario.tipo !== "fisioterapeuta") {
+        listaEl.textContent = "Não foi possível identificar o fisioterapeuta logado.";
+        msgEl.textContent = "Faça login como fisioterapeuta para ver seus pacientes.";
+        msgEl.classList.add("err");
+        return;
+      }
+
+      const cpfFisio = usuario.cpf;
+
+      try {
+        const resp = await fetch(`${API_BASE}/fisioterapeutas/${cpfFisio}/pacientes`);
+        if (!resp.ok) {
+          console.error("Erro ao buscar pacientes:", resp.status);
+          listaEl.textContent = "Erro ao carregar pacientes.";
+          msgEl.textContent = "Verifique o backend ou o CPF do fisioterapeuta.";
+          msgEl.classList.add("err");
+          return;
+        }
+
+        const pacientes = await resp.json();
+
+        if (!Array.isArray(pacientes) || pacientes.length === 0) {
+          listaEl.textContent = "Nenhum paciente cadastrado para esse fisioterapeuta.";
+          return;
+        }
+
+        listaEl.innerHTML = "";
+        pacientes.forEach((p) => {
+          const div = document.createElement("div");
+          div.className = "paciente-item";
+          div.innerHTML = `
+            <strong>${p.nome || "Paciente"}</strong><br>
+            CPF: ${p.cpf || "-"} | Idade: ${p.idade ?? "-"} | Situação: ${p.situacao || "-"}
+          `;
+          listaEl.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao buscar pacientes:", err);
+        listaEl.textContent = "Erro inesperado ao carregar pacientes.";
+        msgEl.textContent = "Veja o console para mais detalhes.";
+        msgEl.classList.add("err");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      atualizarHeader();
+      // Se quiser já carregar de cara:
+      // carregarPacientes();
+    });
   </script>
 </body>
 </html>
