@@ -1,15 +1,38 @@
+# backend/repositorio_memoria.py
+
 class RepositorioFisioMemoria:
     def __init__(self):
+        # lista de dicionários com dados dos fisioterapeutas
         self._fisioterapeutas = []
 
     def existe_cpf(self, cpf: str) -> bool:
-        return any(f["cpf"] == cpf for f in self._fisioterapeutas)
+        return any(f.get("cpf") == cpf for f in self._fisioterapeutas)
 
-    def existe_email(self, email: str):
-        return any(f["email"] == email for f in self._fisioterapeutas)
+    def existe_email(self, email: str) -> bool:
+        return any(f.get("email") == email for f in self._fisioterapeutas)
 
     def salvar(self, dados: dict):
         self._fisioterapeutas.append(dados)
+
+
+# 🔹 repositório em memória de pacientes
+class RepositorioPacienteMemoria:
+    def __init__(self):
+        # lista de dicionários com dados dos pacientes
+        self._pacientes = []
+
+    def existe_paciente(self, cpf: str, fisioterapeuta_id: str) -> bool:
+        """
+        Verifica se já existe paciente com esse CPF vinculado ao mesmo fisioterapeuta.
+        """
+        return any(
+            p.get("cpf") == cpf and p.get("fisioterapeuta_id") == fisioterapeuta_id
+            for p in self._pacientes
+        )
+
+    def salvar(self, dados: dict):
+        self._pacientes.append(dados)
+
 
 class RepositorioNotificacaoMemoria:
     def __init__(self):
@@ -57,9 +80,12 @@ class RepositorioMetaMemoria:
             and m.get("status") in {"ativa", "em_andamento"}
         ]
 
-
     def obter_por_id(self, meta_id: int):
         for m in self._metas:
             if m.get("id") == meta_id:
                 return m
         return None
+
+
+repo_fisio_memoria = RepositorioFisioMemoria()
+repo_paciente_memoria = RepositorioPacienteMemoria()

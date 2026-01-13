@@ -7,6 +7,8 @@ from app.api.routes_fisioterapeuta import router as fisioterapeuta_router
 from app.api.routes_paciente import router as paciente_router
 from app.api.routes_notificacoes import router as notificacoes_router
 from app.api.routes_metas import router as metas_router
+from app.api.routes_login import router as login_router
+
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME)
@@ -50,11 +52,6 @@ def create_app() -> FastAPI:
         tags=["fisioterapeutas"],
     )
 
-    app.include_router(
-        fisioterapeuta_router,
-        prefix=api_prefix,
-        tags=["fisioterapeutas"],
-    )
 
     app.include_router(
         paciente_router,
@@ -74,6 +71,12 @@ def create_app() -> FastAPI:
         prefix=api_prefix,
         tags=["metas"],
     )
+
+    app.include_router(
+        login_router,
+        prefix=api_prefix,
+        tags=["login"],
+)
 
 
     return app

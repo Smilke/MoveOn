@@ -2,115 +2,342 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Teste - Metas e Notificações</title>
+  <title>Teste - Metas, Notificações e Feedback do Paciente</title>
 </head>
 <body>
-  <h1>Teste - Metas e Notificações do Paciente</h1>
+  <h1>Teste - Metas, Notificações e Feedback do Paciente</h1>
 
-  <label>
-    Paciente ID (CPF):
-    <input id="pacienteId" type="text" value="12345678901" />
-  </label>
-  <button onclick="carregarMetas()">Carregar metas</button>
-  <button onclick="carregarNotificacoes()">Carregar notificações</button>
+  <div>
+    <label for="pacienteId">Paciente ID (CPF): </label>
+    <input type="text" id="pacienteId" value="12345678901" />
+    <button onclick="carregarMetas()">Carregar metas</button>
+    <button onclick="carregarNotificacoes()">Carregar notificações</button>
+    <button onclick="carregarFeedbacks()">Carregar feedbacks</button>
+  </div>
+
+  <hr />
 
   <h2>Metas ativas / em andamento</h2>
   <div id="listaMetas"></div>
 
+  <hr />
+
   <h2>Notificações</h2>
   <div id="listaNotificacoes"></div>
+
+  <hr />
+
+  <h2>Enviar feedback</h2>
+  <div>
+    <label for="feedbackTexto">Mensagem de feedback *</label><br />
+    <textarea id="feedbackTexto" rows="4" cols="60"
+      placeholder="Conte como você está se sentindo com os exercícios, dificuldades, dores, etc."></textarea>
+    <br /><br />
+
+    <label for="feedbackNota">Nota (1 a 5, opcional)</label>
+    <select id="feedbackNota">
+      <option value="">Sem nota</option>
+      <option value="1">1 - Muito ruim</option>
+      <option value="2">2</option>
+      <option value="3">3 - Ok</option>
+      <option value="4">4</option>
+      <option value="5">5 - Excelente</option>
+    </select>
+
+    <br /><br />
+    <button onclick="enviarFeedback()">Enviar feedback</button>
+
+    <div id="feedbackStatus" style="margin-top: 10px; font-size: 0.9rem;"></div>
+  </div>
+
+  <hr />
+
+  <h2>Meus feedbacks</h2>
+  <div id="listaFeedbacks"></div>
 
   <script>
     const API_BASE = "http://127.0.0.1:8000/api";
 
+    function getPacienteId() {
+      return document.getElementById("pacienteId").value.trim();
+    }
+
+    // -------- METAS --------
+
     async function carregarMetas() {
-      const pacienteId = document.getElementById("pacienteId").value.trim();
+      const pacienteId = getPacienteId();
       if (!pacienteId) {
-        alert("Informe o ID do paciente (CPF).");
+        alert("Informe o CPF do paciente.");
         return;
       }
 
-      const resp = await fetch(`${API_BASE}/pacientes/${pacienteId}/metas`);
-      const metas = await resp.json();
+      try {
+        const resp = await fetch(`${API_BASE}/pacientes/${pacienteId}/metas`);
+        if (!resp.ok) {
+          console.error("Erro ao buscar metas:", resp.status);
+          alert("Erro ao buscar metas (veja o console).");
+          return;
+        }
 
-      const container = document.getElementById("listaMetas");
-      container.innerHTML = "";
+        const metas = await resp.json();
+        const container = document.getElementById("listaMetas");
+        container.innerHTML = "";
 
-      if (metas.length === 0) {
-        container.innerText = "Nenhuma meta ativa/em andamento.";
+        if (!Array.isArray(metas) || metas.length === 0) {
+          container.innerText = "Nenhuma meta encontrada.";
+          return;
+        }
+
+        metas.forEach((meta) => {
+          const div = document.createElement("div");
+          div.style.border = "1px solid #ccc";
+          div.style.margin = "4px 0";
+          div.style.padding = "4px";
+
+          const selectId = `status_${meta.id}`;
+          const statusOptions = ["ativa", "em_andamento", "concluida"];
+
+          div.innerHTML = `
+            <strong>ID:</strong> ${meta.id} <br>
+            <strong>Descrição:</strong> ${meta.descricao || ""} <br>
+            <strong>Status atual:</strong> ${meta.status} <br>
+            <label for="${selectId}">Novo status:</label>
+            <select id="${selectId}">
+              ${statusOptions
+                .map(
+                  (s) =>
+                    `<option value="${s}" ${
+                      s === meta.status ? "selected" : ""
+                    }>${s}</option>`
+                )
+                .join("")}
+            </select>
+            <button onclick="atualizarStatusMeta(${meta.id})">
+              Atualizar status
+            </button>
+          `;
+
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao carregar metas:", err);
+        alert("Erro ao carregar metas (veja o console).");
+      }
+    }
+
+    async function atualizarStatusMeta(metaId) {
+      const pacienteId = getPacienteId();
+      if (!pacienteId) {
+        alert("Informe o CPF do paciente.");
         return;
       }
 
-      metas.forEach((meta) => {
-        const div = document.createElement("div");
-        div.style.border = "1px solid #ccc";
-        div.style.margin = "8px 0";
-        div.style.padding = "8px";
+      const select = document.getElementById(`status_${metaId}`);
+      const novoStatus = select.value;
 
-        div.innerHTML = `
-          <strong>ID:</strong> ${meta.id} <br/>
-          <strong>Descrição:</strong> ${meta.descricao} <br/>
-          <strong>Período:</strong> ${meta.data_inicio} até ${meta.data_fim} <br/>
-          <strong>Status:</strong> ${meta.status} <br/>
-          <button data-id="${meta.id}" data-status="em_andamento">Marcar em andamento</button>
-          <button data-id="${meta.id}" data-status="concluida">Concluir</button>
-          <button data-id="${meta.id}" data-status="nao_atingida">Não atingida</button>
-        `;
+      // body básico – ajusta aqui se o teu backend pedir outro formato
+      const bodyObj = {
+        novo_status: novoStatus
+      };
 
-        div.querySelectorAll("button").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            const id = btn.getAttribute("data-id");
-            const novoStatus = btn.getAttribute("data-status");
-            atualizarStatusMeta(id, novoStatus);
-          });
+      try {
+        const resp = await fetch(`${API_BASE}/metas/${metaId}/status`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(bodyObj),
         });
 
-        container.appendChild(div);
-      });
+        const textoResposta = await resp.text();
+
+        if (!resp.ok) {
+          console.error(
+            "Erro ao atualizar status:",
+            resp.status,
+            textoResposta
+          );
+          alert(
+            `Erro ao atualizar status da meta (${resp.status}). Veja o console.`
+          );
+          return;
+        }
+
+        await carregarMetas();
+        await carregarNotificacoes();
+      } catch (err) {
+        console.error("Erro inesperado ao atualizar meta:", err);
+        alert("Erro ao atualizar meta (veja o console).");
+      }
     }
 
-    async function atualizarStatusMeta(id, novoStatus) {
-      await fetch(`${API_BASE}/metas/${id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ novo_status: novoStatus }),
-      });
-
-      // depois de atualizar, recarrega as metas
-      carregarMetas();
-    }
+    // -------- NOTIFICAÇÕES --------
 
     async function carregarNotificacoes() {
-      const pacienteId = document.getElementById("pacienteId").value.trim();
+      const pacienteId = getPacienteId();
       if (!pacienteId) {
-        alert("Informe o ID do paciente (CPF).");
+        alert("Informe o CPF do paciente.");
         return;
       }
 
-      const resp = await fetch(`${API_BASE}/pacientes/${pacienteId}/notificacoes`);
-      const notificacoes = await resp.json();
+      try {
+        const resp = await fetch(
+          `${API_BASE}/pacientes/${pacienteId}/notificacoes`
+        );
+        if (!resp.ok) {
+          console.error("Erro ao buscar notificações:", resp.status);
+          alert("Erro ao buscar notificações (veja o console).");
+          return;
+        }
 
-      const container = document.getElementById("listaNotificacoes");
-      container.innerHTML = "";
+        const notificacoes = await resp.json();
+        const container = document.getElementById("listaNotificacoes");
+        container.innerHTML = "";
 
-      if (notificacoes.length === 0) {
-        container.innerText = "Nenhuma notificação.";
+        if (!Array.isArray(notificacoes) || notificacoes.length === 0) {
+          container.innerText = "Nenhuma notificação.";
+          return;
+        }
+
+        notificacoes.forEach((noti) => {
+          const div = document.createElement("div");
+          div.style.border = "1px solid #ccc";
+          div.style.margin = "4px 0";
+          div.style.padding = "4px";
+
+          div.innerHTML = `
+            <strong>${noti.tipo || "Notificação"}</strong>
+            - ${noti.data_hora || ""}<br>
+            ${noti.mensagem || JSON.stringify(noti)}
+          `;
+
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao carregar notificações:", err);
+        alert("Erro ao carregar notificações (veja o console).");
+      }
+    }
+
+    // -------- FEEDBACK --------
+
+    async function enviarFeedback() {
+      const pacienteId = getPacienteId();
+      if (!pacienteId) {
+        alert("Informe o CPF do paciente antes de enviar o feedback.");
         return;
       }
 
-      notificacoes.forEach((noti) => {
-        const div = document.createElement("div");
-        div.style.border = "1px solid #ccc";
-        div.style.margin = "4px 0";
-        div.style.padding = "4px";
+      const texto = document.getElementById("feedbackTexto").value.trim();
+      const notaStr = document.getElementById("feedbackNota").value;
+      const statusBox = document.getElementById("feedbackStatus");
 
-        div.innerHTML = `
-          <strong>${noti.tipo}</strong> - ${noti.data_hora} <br/>
-          ${noti.mensagem}
-        `;
+      statusBox.style.color = "inherit";
+      statusBox.textContent = "";
 
-        container.appendChild(div);
-      });
+      if (!texto) {
+        alert("Escreva uma mensagem de feedback.");
+        return;
+      }
+
+      let body = {
+        feedback: texto
+      };
+
+      if (notaStr !== "") {
+        const nota = Number(notaStr);
+        body.avaliacao = nota;
+      }
+
+      try {
+        // Ajusta a rota aqui, se no teu backend o caminho for outro
+        const resp = await fetch(
+          `${API_BASE}/pacientes/${pacienteId}/feedback`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          }
+        );
+
+        const textoResposta = await resp.text();
+
+        if (!resp.ok) {
+          console.error("Erro ao enviar feedback:", resp.status, textoResposta);
+          statusBox.style.color = "red";
+          statusBox.textContent =
+            "Erro ao enviar feedback. Veja o console para detalhes.";
+          return;
+        }
+
+        statusBox.style.color = "green";
+        statusBox.textContent = "Feedback enviado com sucesso!";
+
+        // limpa mensagem
+        document.getElementById("feedbackTexto").value = "";
+        document.getElementById("feedbackNota").value = "";
+
+        // opcional: recarrega lista de feedbacks
+        await carregarFeedbacks();
+      } catch (err) {
+        console.error("Erro inesperado ao enviar feedback:", err);
+        statusBox.style.color = "red";
+        statusBox.textContent =
+          "Erro inesperado ao enviar feedback. Veja o console.";
+      }
+    }
+
+    async function carregarFeedbacks() {
+      const pacienteId = getPacienteId();
+      if (!pacienteId) {
+        alert("Informe o CPF do paciente.");
+        return;
+      }
+
+      try {
+        // Ajusta a rota aqui caso seja diferente no teu backend
+        const resp = await fetch(
+          `${API_BASE}/pacientes/${pacienteId}/feedback`
+        );
+
+        if (!resp.ok) {
+          console.error("Erro ao buscar feedbacks:", resp.status);
+          alert("Erro ao buscar feedbacks (veja o console).");
+          return;
+        }
+
+        const feedbacks = await resp.json();
+        const container = document.getElementById("listaFeedbacks");
+        container.innerHTML = "";
+
+        if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+          container.innerText = "Nenhum feedback enviado ainda.";
+          return;
+        }
+
+        feedbacks.forEach((fb) => {
+          const div = document.createElement("div");
+          div.style.border = "1px solid #ccc";
+          div.style.margin = "4px 0";
+          div.style.padding = "4px";
+
+          const data = fb.data_hora || fb.data || "";
+          const nota = fb.avaliacao != null ? `Nota: ${fb.avaliacao}` : "";
+
+          div.innerHTML = `
+            <strong>${data}</strong><br>
+            ${fb.feedback || fb.mensagem || ""}<br>
+            ${nota}
+          `;
+
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao carregar feedbacks:", err);
+        alert("Erro ao carregar feedbacks (veja o console).");
+      }
     }
   </script>
 </body>

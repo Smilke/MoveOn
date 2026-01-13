@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Feedback para o Fisioterapeuta - MoveOn</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    header {
+      margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 1.7rem;
+      margin: 0 0 4px;
+    }
+    p.sub {
+      margin-top: 0;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .top-link {
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+    }
+    .top-link:hover {
+      text-decoration: underline;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      margin-bottom: 20px;
+    }
+    label {
+      font-size: 0.9rem;
+      color: #374151;
+    }
+    input[type="text"], textarea, select {
+      width: 100%;
+      max-width: 480px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .btn-primary, .btn-secondary {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: #2563eb;
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+    .item {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      background: #f9fafb;
+    }
+    #feedbackStatus {
+      font-size: 0.85rem;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="top-row">
+        <a href="paciente_area.html" class="top-link">← Voltar para a área do paciente</a>
+      </div>
+      <h1>Enviar feedback</h1>
+      <p class="sub">
+        Use este espaço para contar ao seu fisioterapeuta como você está se sentindo
+        com os exercícios: dores, dificuldades, progresso, dúvidas etc.
+      </p>
+    </header>
+
+    <section class="card">
+      <div style="margin-bottom: 12px;">
+        <label for="pacienteId">Paciente ID (CPF) *</label><br />
+        <input type="text" id="pacienteId" value="12345678901" />
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label for="feedbackTexto">Mensagem de feedback *</label><br />
+        <textarea id="feedbackTexto"
+          placeholder="Escreva aqui seu feedback para o fisioterapeuta..."></textarea>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label for="feedbackNota">Nota (1 a 5, opcional)</label><br />
+        <select id="feedbackNota">
+          <option value="">Sem nota</option>
+          <option value="1">1 - Muito ruim</option>
+          <option value="2">2</option>
+          <option value="3">3 - Ok</option>
+          <option value="4">4</option>
+          <option value="5">5 - Excelente</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="enviarFeedback()">Enviar feedback</button>
+      <button class="btn-secondary" style="margin-left: 6px;" onclick="carregarFeedbacks()">
+        Atualizar lista de feedbacks
+      </button>
+
+      <div id="feedbackStatus"></div>
+    </section>
+
+    <section class="card">
+      <h2>Meus feedbacks</h2>
+      <div id="listaFeedbacks"></div>
+    </section>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    function getPacienteId() {
+      return document.getElementById("pacienteId").value.trim();
+    }
+
+    async function enviarFeedback() {
+      const pacienteId = getPacienteId();
+      if (!pacienteId) {
+        alert("Informe o CPF do paciente.");
+        return;
+      }
+
+      const texto = document.getElementById("feedbackTexto").value.trim();
+      const notaStr = document.getElementById("feedbackNota").value;
+      const statusBox = document.getElementById("feedbackStatus");
+
+      statusBox.style.color = "#374151";
+      statusBox.textContent = "";
+
+      if (!texto) {
+        alert("Escreva uma mensagem de feedback.");
+        return;
+      }
+
+      let body = { feedback: texto };
+      if (notaStr !== "") {
+        body.avaliacao = Number(notaStr);
+      }
+
+      try {
+        // Ajusta a rota aqui se no teu backend for diferente
+        const resp = await fetch(
+          `${API_BASE}/pacientes/${pacienteId}/feedback`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }
+        );
+
+        const textoResposta = await resp.text();
+
+        if (!resp.ok) {
+          console.error("Erro ao enviar feedback:", resp.status, textoResposta);
+          statusBox.style.color = "red";
+          statusBox.textContent =
+            "Erro ao enviar feedback. Veja o console para detalhes.";
+          return;
+        }
+
+        statusBox.style.color = "green";
+        statusBox.textContent = "Feedback enviado com sucesso!";
+
+        document.getElementById("feedbackTexto").value = "";
+        document.getElementById("feedbackNota").value = "";
+
+        await carregarFeedbacks();
+      } catch (err) {
+        console.error("Erro inesperado ao enviar feedback:", err);
+        statusBox.style.color = "red";
+        statusBox.textContent =
+          "Erro inesperado ao enviar feedback. Veja o console.";
+      }
+    }
+
+    async function carregarFeedbacks() {
+      const pacienteId = getPacienteId();
+      if (!pacienteId) {
+        alert("Informe o CPF do paciente.");
+        return;
+      }
+
+      try {
+        // Ajusta a rota aqui caso seja diferente no teu backend
+        const resp = await fetch(
+          `${API_BASE}/pacientes/${pacienteId}/feedback`
+        );
+
+        if (!resp.ok) {
+          console.error("Erro ao buscar feedbacks:", resp.status);
+          alert("Erro ao buscar feedbacks (veja o console).");
+          return;
+        }
+
+        const feedbacks = await resp.json();
+        const container = document.getElementById("listaFeedbacks");
+        container.innerHTML = "";
+
+        if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+          container.innerText = "Nenhum feedback enviado ainda.";
+          return;
+        }
+
+        feedbacks.forEach((fb) => {
+          const div = document.createElement("div");
+          div.className = "item";
+
+          const data = fb.data_hora || fb.data || "";
+          const nota = fb.avaliacao != null ? ` • Nota: ${fb.avaliacao}` : "";
+
+          div.innerHTML = `
+            <strong>${data || "Sem data"}</strong>${nota}<br>
+            ${fb.feedback || fb.mensagem || ""}
+          `;
+
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao carregar feedbacks:", err);
+        alert("Erro ao carregar feedbacks (veja o console).");
+      }
+    }
+  </script>
+</body>
+</html>

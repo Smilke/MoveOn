@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Área do Fisioterapeuta - MoveOn</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    header {
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin: 0;
+    }
+    p.sub {
+      margin-top: 4px;
+      margin-bottom: 0;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+    .top-link {
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+    }
+    .top-link:hover {
+      text-decoration: underline;
+    }
+    .user-info {
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    .logout-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .logout-btn:hover {
+      background: #dc2626;
+    }
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 24px 20px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      max-width: 360px;
+      flex: 1 1 260px;
+    }
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 1.3rem;
+    }
+    .card p {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #4b5563;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+    .btn-primary {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="header-top">
+        <a href="menu.html" class="top-link">← Voltar para o menu inicial</a>
+        <div>
+          <span class="user-info">
+            Logado como: <strong id="nome-fisio">Fisioterapeuta</strong>
+          </span>
+          <button class="logout-btn" onclick="logout()">Sair</button>
+        </div>
+      </div>
+      <div>
+        <h1>Área do Fisioterapeuta</h1>
+        <p class="sub">
+          Aqui você consegue se cadastrar na plataforma e vincular novos pacientes sob sua responsabilidade.
+        </p>
+      </div>
+    </header>
+
+    <section class="cards">
+      <article class="card">
+        <h2>Cadastrar fisioterapeuta</h2>
+        <p>
+          Cadastre o fisioterapeuta na plataforma para poder gerenciar pacientes,
+          definir metas e acompanhar a evolução dos tratamentos.
+        </p>
+        <a href="fisio_cadastro.html" class="btn-primary">Ir para cadastro</a>
+      </article>
+
+      <article class="card">
+        <h2>Vincular paciente a um fisioterapeuta</h2>
+        <p>
+          Cadastre um novo paciente informando o CPF do fisioterapeuta
+          responsável, vinculando esse paciente diretamente a você.
+        </p>
+        <a href="paciente_cadastro.html" class="btn-primary">Cadastrar paciente</a>
+      </article>
+    </section>
+
+    <footer>
+      Protótipo de navegação — uso interno do time MoveOn.
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      // Proteção: só entra se tiver usuário logado
+      const usuarioStr = localStorage.getItem("usuario");
+      if (!usuarioStr) {
+        // ninguém logado → volta pro login
+        window.location.href = "login.html";
+        return;
+      }
+
+      // Se tiver usuário, tenta mostrar o nome no cabeçalho
+      try {
+        const usuario = JSON.parse(usuarioStr);
+        const nomeEl = document.getElementById("nome-fisio");
+        if (nomeEl && usuario.nome) {
+          nomeEl.textContent = usuario.nome;
+        }
+      } catch (e) {
+        console.error("Erro ao ler usuário do localStorage:", e);
+      }
+    })();
+
+    function logout() {
+      localStorage.removeItem("usuario");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>
