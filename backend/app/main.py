@@ -10,8 +10,7 @@ from app.api.routes_metas import router as metas_router
 from app.api.routes_login import router as login_router
 from app.api.routes_recuperacao_senha import router as recuperacao_router
 from app.api.routes_feedback import router as feedback_router
-
-
+from app.api.routes_prescricoes import router as prescricoes_router  
 
 def create_app() -> FastAPI:
     app = FastAPI(title=settings.PROJECT_NAME)
@@ -93,6 +92,11 @@ def create_app() -> FastAPI:
 )
 
 
+    app.include_router(      
+        prescricoes_router,
+        prefix=api_prefix,
+        tags=["prescricoes"],
+    )
 
     return app
 
