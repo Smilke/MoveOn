@@ -14,6 +14,10 @@ from app.api.routes_login import router as login_router
 from app.api.routes_recuperacao_senha import router as recuperacao_router
 from app.api.routes_feedback import router as feedback_router
 from app.api.routes_exercises import router as exercises_router
+from app.api.routes_execution_history import router as execution_history_router
+from app.api.routes_prescriptions import router as prescriptions_router
+from app.api.routes_patients_db import router as patients_db_router
+from app.api.routes_fisioterapeuta_db import router as fisioterapeuta_db_router
 
 
 def create_app() -> FastAPI:
@@ -102,7 +106,31 @@ def create_app() -> FastAPI:
         tags=["exercises"],
     )
 
-    # 🔴 AQUI é onde as tabelas são criadas
+    app.include_router(
+        execution_history_router,
+        prefix=api_prefix,
+        tags=["execution_history"],  
+    )
+
+    app.include_router(
+        prescriptions_router,
+        prefix=api_prefix,
+        tags=["prescriptions"],
+    )
+
+    app.include_router(
+        patients_db_router,
+        prefix=api_prefix,
+        tags=["patients_db"],   
+    )
+    
+    app.include_router(
+        fisioterapeuta_db_router,
+        prefix=api_prefix,
+        tags=["fisioterapeutas_db"],
+    )
+    
+    
     @app.on_event("startup")
     def on_startup() -> None:
         # cria todas as tabelas definidas em app.models

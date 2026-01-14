@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Histórico de Exercícios - MoveOn</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 16px 80px;
+    }
+    header {
+      margin-bottom: 24px;
+    }
+    .top-link {
+      display: inline-block;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+    }
+    .top-link:hover {
+      text-decoration: underline;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin: 0 0 4px 0;
+    }
+    p.sub {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    .auth-info {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    .auth-info span.nome {
+      font-weight: 600;
+    }
+    .btn-sair {
+      margin-top: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-sair:hover {
+      background: #fecaca;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 20px 18px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      margin-bottom: 20px;
+    }
+
+    .filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+      margin-top: 12px;
+      margin-bottom: 16px;
+    }
+    .filtros label {
+      font-size: 0.85rem;
+      color: #374151;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .filtros select,
+    .filtros input {
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+    }
+    .filtros input[type="date"] {
+      min-width: 150px;
+    }
+    .btn-primary {
+      padding: 9px 16px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .msg {
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .msg.err { color: #dc2626; }
+    .msg.ok  { color: #16a34a; }
+
+    .resumo {
+      font-size: 0.9rem;
+      color: #4b5563;
+      margin-bottom: 12px;
+    }
+
+    .exec-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      background: #f9fafb;
+    }
+    .exec-item strong.titulo {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+    .exec-item small {
+      color: #6b7280;
+      font-size: 0.8rem;
+    }
+    .exec-item .linha {
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <a href="paciente_area.html" class="top-link">← Voltar para área do paciente</a>
+      <h1>Histórico de exercícios</h1>
+      <p class="sub">
+        Veja as execuções registradas dos exercícios prescritos para você, com período filtrado.
+      </p>
+      <div class="auth-info">
+        <span>Paciente logado: <span class="nome" id="nome-paciente"></span></span><br />
+        <button class="btn-sair" onclick="sair()">Sair</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2 style="margin: 0 0 8px 0; font-size: 1.1rem;">Filtros de período</h2>
+      <p style="margin: 0 0 8px 0; font-size: 0.9rem; color: #6b7280;">
+        Escolha um período para ver seu histórico. Para datas personalizadas, selecione "Período personalizado".
+      </p>
+
+      <div class="filtros">
+        <div>
+          <label for="periodo">Período</label>
+          <select id="periodo">
+            <option value="LAST_7_DAYS">Últimos 7 dias</option>
+            <option value="LAST_30_DAYS">Últimos 30 dias</option>
+            <option value="LAST_90_DAYS">Últimos 90 dias</option>
+            <option value="CUSTOM">Período personalizado</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="dataInicio">Data início</label>
+          <input type="date" id="dataInicio" disabled />
+        </div>
+
+        <div>
+          <label for="dataFim">Data fim</label>
+          <input type="date" id="dataFim" disabled />
+        </div>
+
+        <div>
+          <button class="btn-primary" onclick="carregarHistorico()">Carregar histórico</button>
+        </div>
+      </div>
+
+      <div id="mensagem" class="msg"></div>
+
+      <div class="resumo" id="resumo-periodo">
+        Nenhum histórico carregado ainda.
+      </div>
+
+      <div id="lista-execucoes"></div>
+    </section>
+
+    <footer>
+      Protótipo de navegação — uso interno do time MoveOn.
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    function obterUsuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Erro ao ler usuário logado do localStorage:", e);
+        return null;
+      }
+    }
+
+    function atualizarHeader() {
+      const usuario = obterUsuarioLogado();
+      const nomeEl = document.getElementById("nome-paciente");
+
+      if (!usuario || usuario.tipo !== "paciente") {
+        nomeEl.textContent = "Não autenticado";
+        return;
+      }
+
+      nomeEl.textContent = usuario.nome || "";
+    }
+
+    function sair() {
+      localStorage.removeItem("moveon_usuario_logado");
+      window.location.href = "login.html";
+    }
+
+    function atualizarHabilitacaoDatas() {
+      const select = document.getElementById("periodo");
+      const customSelecionado = select.value === "CUSTOM";
+      document.getElementById("dataInicio").disabled = !customSelecionado;
+      document.getElementById("dataFim").disabled = !customSelecionado;
+    }
+
+    async function carregarHistorico() {
+      const msgEl = document.getElementById("mensagem");
+      const listaEl = document.getElementById("lista-execucoes");
+      const resumoEl = document.getElementById("resumo-periodo");
+
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+      listaEl.innerHTML = "";
+      resumoEl.textContent = "Carregando histórico...";
+
+      const usuario = obterUsuarioLogado();
+      if (!usuario || usuario.tipo !== "paciente") {
+        msgEl.textContent = "Você precisa estar logado como paciente para ver o histórico.";
+        msgEl.classList.add("err");
+        resumoEl.textContent = "Não foi possível carregar o histórico.";
+        return;
+      }
+
+      // Aqui tentamos usar tanto "id" quanto "patient_id" para ser mais robusto
+      const patientId = usuario.id || usuario.patient_id;
+      if (!patientId) {
+        msgEl.textContent = "Não foi possível identificar seu ID de paciente.";
+        msgEl.classList.add("err");
+        resumoEl.textContent = "Verifique se o login está retornando o ID do paciente.";
+        return;
+      }
+
+      const periodo = document.getElementById("periodo").value;
+      const dataInicio = document.getElementById("dataInicio").value;
+      const dataFim = document.getElementById("dataFim").value;
+
+      const params = new URLSearchParams();
+      params.append("period_filter", periodo);
+
+      if (periodo === "CUSTOM") {
+        if (!dataInicio || !dataFim) {
+          msgEl.textContent = "Informe data de início e fim para o período personalizado.";
+          msgEl.classList.add("err");
+          resumoEl.textContent = "Período personalizado incompleto.";
+          return;
+        }
+
+        // Montar ISO simples (sem hora, deixa o backend tratar)
+        params.append("start_date", dataInicio + "T00:00:00");
+        params.append("end_date", dataFim + "T23:59:59");
+      }
+
+      try {
+        const resp = await fetch(
+          `${API_BASE}/patients/${patientId}/exercise-history?` + params.toString()
+        );
+
+        if (!resp.ok) {
+          const dataErro = await resp.json().catch(() => null);
+          console.error("Erro ao buscar histórico:", resp.status, dataErro);
+          msgEl.textContent =
+            (dataErro && dataErro.detail) ||
+            `Erro ao buscar histórico (${resp.status}).`;
+          msgEl.classList.add("err");
+          resumoEl.textContent = "Não foi possível carregar o histórico.";
+          return;
+        }
+
+        const data = await resp.json();
+
+        // Atualiza resumo do período
+        const inicio = data.period_start ? new Date(data.period_start) : null;
+        const fim = data.period_end ? new Date(data.period_end) : null;
+
+        let textoPeriodo = "";
+        if (inicio && fim) {
+          const fmt = (d) =>
+            d.toLocaleDateString("pt-BR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            });
+          textoPeriodo = `Período: ${fmt(inicio)} até ${fmt(fim)} | Execuções registradas: ${
+            data.total_executions ?? 0
+          }`;
+        } else {
+          textoPeriodo = `Execuções registradas: ${data.total_executions ?? 0}`;
+        }
+
+        resumoEl.textContent = textoPeriodo;
+
+        // Se não tiver dados
+        if (!data.has_data) {
+          listaEl.innerHTML = "";
+          const p = document.createElement("p");
+          p.className = "msg";
+          p.textContent = data.message || "Ainda não há histórico para esse período.";
+          listaEl.appendChild(p);
+          return;
+        }
+
+        // Renderizar execuções
+        listaEl.innerHTML = "";
+        const execucoes = data.executions || [];
+
+        execucoes.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "exec-item";
+
+          const dataExec = item.execution_date
+            ? new Date(item.execution_date)
+            : null;
+
+          const dataFormatada = dataExec
+            ? dataExec.toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "-";
+
+          const nomeExercicio =
+            item.exercise_name ||
+            item.exercise ||
+            item.exercise_title ||
+            "Exercício";
+
+          const status =
+            item.status ||
+            (item.was_completed === true
+              ? "Concluído"
+              : item.completion_rate && item.completion_rate > 0
+              ? "Parcial"
+              : "Não concluído");
+
+          const dor =
+            item.pain_level !== undefined && item.pain_level !== null
+              ? `${item.pain_level}/10`
+              : "-";
+
+          const localDor

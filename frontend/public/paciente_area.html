@@ -13,13 +13,13 @@
     .page {
       max-width: 960px;
       margin: 40px auto;
-      padding: 0 16px 80px;
+      padding: 0 16px 60px;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
     h1 {
       font-size: 1.8rem;
@@ -29,6 +29,13 @@
       margin: 0;
       color: #6b7280;
       font-size: 0.95rem;
+    }
+
+    /* Área de autenticação + sininho */
+    .auth-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .auth-info {
       text-align: right;
@@ -41,7 +48,12 @@
     .auth-info span.nome {
       font-weight: 600;
       display: block;
+      max-width: 160px;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
     }
+
     .btn-sair {
       margin-top: 6px;
       padding: 6px 12px;
@@ -56,17 +68,158 @@
       background: #fecaca;
     }
 
+    /* Sininho + painel */
+    .notif-container {
+      position: relative;
+    }
+    .notif-bell {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
+    }
+    .notif-bell svg {
+      width: 20px;
+      height: 20px;
+      fill: #f9fafb;
+    }
+    .notif-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #f97316;
+      color: #fff;
+      font-size: 0.7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+    }
+    .notif-badge.hidden {
+      display: none;
+    }
+
+    .notif-panel {
+      position: absolute;
+      top: 48px;
+      right: 0;
+      width: 320px;
+      max-height: 380px;
+      background: #0f172a;
+      color: #e5e7eb;
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.8);
+      padding: 10px 10px 12px;
+      box-sizing: border-box;
+      display: none;
+      z-index: 20;
+    }
+    .notif-panel.open {
+      display: block;
+    }
+    .notif-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .notif-header-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .notif-header-sub {
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    .notif-close {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+    .notif-close:hover {
+      color: #e5e7eb;
+    }
+    .notif-list {
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 6px;
+    }
+    .notif-empty {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #9ca3af;
+      padding: 26px 8px 18px;
+    }
+    .notif-empty span {
+      display: block;
+      font-size: 1.6rem;
+      margin-bottom: 4px;
+      opacity: 0.7;
+    }
+    .notif-item {
+      border-radius: 12px;
+      padding: 8px 9px;
+      background: radial-gradient(circle at top left, #1f2937, #020617);
+      border: 1px solid #1f2937;
+      margin-bottom: 6px;
+      font-size: 0.86rem;
+    }
+    .notif-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .notif-item-tipo {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #bfdbfe;
+      font-weight: 600;
+    }
+    .notif-item-data {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
+    .notif-item-msg {
+      font-size: 0.86rem;
+      color: #e5e7eb;
+      line-height: 1.3;
+    }
+
+    .msg-global {
+      font-size: 0.85rem;
+      margin: 4px 0 10px;
+    }
+    .msg-global.err { color: #dc2626; }
+    .msg-global.ok  { color: #16a34a; }
+
+    /* Cards principais do paciente */
     .cards {
       display: flex;
       flex-wrap: wrap;
       gap: 24px;
       justify-content: center;
-      margin-bottom: 32px;
+      margin-top: 10px;
     }
     .card {
       background: #ffffff;
       border-radius: 16px;
-      padding: 24px 24px 20px;
+      padding: 20px 22px 18px;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
       max-width: 360px;
       flex: 1 1 260px;
@@ -74,7 +227,7 @@
     .card h2 {
       margin-top: 0;
       margin-bottom: 8px;
-      font-size: 1.3rem;
+      font-size: 1.25rem;
     }
     .card p {
       margin-top: 0;
@@ -100,54 +253,9 @@
       background: #1d4ed8;
     }
 
-    .card-wide {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
-      margin-top: 16px;
-    }
-    .card-wide-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .card-wide h2 {
-      margin: 0;
-      font-size: 1.15rem;
-    }
-
-    .lista-metas {
-      font-size: 0.95rem;
-      color: #4b5563;
-    }
-    .meta-item {
-      padding: 8px 0;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .meta-item:last-child {
-      border-bottom: none;
-    }
-    .meta-status {
-      display: inline-block;
-      margin-top: 4px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      background: #e5e7eb;
-      color: #374151;
-    }
-    .msg {
-      font-size: 0.9rem;
-      margin-top: 8px;
-    }
-    .msg.err { color: #dc2626; }
-    .msg.ok  { color: #16a34a; }
-
     footer {
       text-align: center;
-      margin-top: 40px;
+      margin-top: 32px;
       font-size: 0.8rem;
       color: #9ca3af;
     }
@@ -159,61 +267,77 @@
       <div>
         <h1>Área do Paciente</h1>
         <p class="sub">
-          Acompanhe suas metas, notificações e dê feedback ao seu fisioterapeuta.
+          Acompanhe suas metas, histórico de exercícios e envie feedback para seu fisioterapeuta.
         </p>
       </div>
 
-      <div class="auth-info">
-        <span class="status" id="status-autenticacao">Não autenticado</span>
-        <span class="nome" id="nome-paciente"></span>
-        <button class="btn-sair" onclick="sair()">Sair</button>
+      <div class="auth-area">
+        <!-- SININHO + NOTIFICAÇÕES -->
+        <div class="notif-container">
+          <button class="notif-bell" type="button" onclick="toggleNotificacoes()" title="Notificações">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2Zm6-6V11a6 6 0 0 0-4-5.66V4a2 2 0 1 0-4 0v1.34A6 6 0 0 0 6 11v5l-1.29 1.29A1 1 0 0 0 5 19h14a1 1 0 0 0 .71-1.71Z"/>
+            </svg>
+          </button>
+          <div id="notif-badge" class="notif-badge hidden">0</div>
+
+          <div id="notif-panel" class="notif-panel">
+            <div class="notif-header">
+              <div>
+                <div class="notif-header-title">Notificações</div>
+                <div class="notif-header-sub">Avisos do seu tratamento</div>
+              </div>
+              <button class="notif-close" onclick="fecharNotificacoes()">×</button>
+            </div>
+            <div id="notif-msg" class="msg-global"></div>
+            <div id="notif-list" class="notif-list"></div>
+            <div id="notif-empty" class="notif-empty" style="display: none;">
+              <span>😴</span>
+              Nenhuma notificação por enquanto.
+            </div>
+          </div>
+        </div>
+
+        <!-- INFOS DE LOGIN -->
+        <div class="auth-info">
+          <span class="status" id="status-autenticacao">Não autenticado</span>
+          <span class="nome" id="nome-paciente"></span>
+          <button class="btn-sair" onclick="sair()">Sair</button>
+        </div>
       </div>
     </header>
 
     <section class="cards">
-      <!-- Card: Minhas metas -->
       <article class="card">
         <h2>Minhas metas</h2>
         <p>
-          Veja as metas que o fisioterapeuta definiu para você, com critérios de sucesso e período de validade.
+          Veja as metas definidas pelo seu fisioterapeuta, acompanhe o status
+          e mantenha seu tratamento em dia.
         </p>
-        <button class="btn-primary" onclick="carregarMetas()">Atualizar metas</button>
+        <a href="paciente_metas.html" class="btn-primary">Acessar metas</a>
       </article>
 
-      <!-- Card: Notificações -->
-      <article class="card">
-        <h2>Minhas notificações</h2>
-        <p>
-          Visualize avisos importantes sobre metas, exercícios e atualizações do seu tratamento.
-        </p>
-        <a href="paciente_notificacoes.html" class="btn-primary">Ver notificações</a>
-      </article>
-
-      <!-- Card: Feedback -->
       <article class="card">
         <h2>Enviar feedback</h2>
         <p>
-          Conte ao seu fisioterapeuta como você está se sentindo em relação aos exercícios e ao tratamento.
+          Conte ao seu fisioterapeuta como você está se sentindo
+          em relação aos exercícios e ao tratamento.
         </p>
         <a href="paciente_feedback.html" class="btn-primary">Enviar feedback</a>
       </article>
-    </section>
 
-    <section class="card-wide">
-      <div class="card-wide-header">
-        <h2>Metas cadastradas para você</h2>
-        <button class="btn-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="carregarMetas()">
-          Atualizar lista
-        </button>
-      </div>
-      <div id="lista-metas" class="lista-metas">
-        Não foi possível identificar o paciente logado.
-      </div>
-      <div id="mensagem-metas" class="msg"></div>
+      <article class="card">
+        <h2>Histórico de exercícios</h2>
+        <p>
+          Confira o histórico das execuções de exercícios, níveis de dor
+          e sua evolução ao longo do tempo.
+        </p>
+        <a href="paciente_historico.html" class="btn-primary">Ver histórico</a>
+      </article>
     </section>
 
     <footer>
-      Protótipo de navegação — uso interno do time MoveOn.
+      Protótipo de navegação — área do paciente MoveOn.
     </footer>
   </div>
 
@@ -236,81 +360,144 @@
       const statusEl = document.getElementById("status-autenticacao");
       const nomeEl = document.getElementById("nome-paciente");
 
-      if (!usuario || usuario.tipo !== "paciente") {
-        statusEl.textContent = "Não autenticado";
+      // ninguém logado
+      if (!usuario) {
+        statusEl.textContent = "Faça login para acessar";
         nomeEl.textContent = "";
         return;
       }
 
-      statusEl.textContent = "Logado como:";
-      nomeEl.textContent = usuario.nome || "";
+      // logado como paciente
+      if (usuario.tipo === "paciente") {
+        statusEl.textContent = "Paciente logado:";
+        // tenta usar nome, se não tiver, usa email ou cpf
+        nomeEl.textContent =
+          usuario.nome ||
+          usuario.email ||
+          usuario.cpf ||
+          "";
+        return;
+      }
+
+      // logado, mas não é paciente (só pra não ficar "não autenticado")
+      if (usuario.tipo === "fisioterapeuta") {
+        statusEl.textContent = "Você está logado como fisioterapeuta";
+        nomeEl.textContent = usuario.nome || "";
+      } else {
+        statusEl.textContent = "Usuário logado:";
+        nomeEl.textContent = usuario.nome || "";
+      }
     }
 
     function sair() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html"; // 
+      window.location.href = "login.html";
     }
 
-    async function carregarMetas() {
+    function toggleNotificacoes() {
+      const panel = document.getElementById("notif-panel");
+      const isOpen = panel.classList.contains("open");
+      if (isOpen) {
+        panel.classList.remove("open");
+      } else {
+        panel.classList.add("open");
+        carregarNotificacoes();
+      }
+    }
+
+    function fecharNotificacoes() {
+      const panel = document.getElementById("notif-panel");
+      panel.classList.remove("open");
+    }
+
+    async function carregarNotificacoes() {
       const usuario = obterUsuarioLogado();
-      const listaEl = document.getElementById("lista-metas");
-      const msgEl = document.getElementById("mensagem-metas");
+      const msgEl = document.getElementById("notif-msg");
+      const listaEl = document.getElementById("notif-list");
+      const vazioEl = document.getElementById("notif-empty");
+      const badgeEl = document.getElementById("notif-badge");
 
       msgEl.textContent = "";
-      msgEl.className = "msg";
+      msgEl.className = "msg-global";
+      listaEl.innerHTML = "";
+      vazioEl.style.display = "none";
 
       if (!usuario || usuario.tipo !== "paciente") {
-        listaEl.textContent = "Não foi possível identificar o paciente logado.";
-        msgEl.textContent = "Faça login como paciente para ver suas metas.";
+        msgEl.textContent = "Faça login como paciente para ver as notificações.";
         msgEl.classList.add("err");
+        badgeEl.textContent = "0";
+        badgeEl.classList.add("hidden");
         return;
       }
 
-      const cpfPaciente = usuario.cpf;
+      const pacienteId = usuario.cpf || usuario.id || usuario.patient_id;
+      if (!pacienteId) {
+        msgEl.textContent = "Não foi possível identificar seu ID/CPF de paciente.";
+        msgEl.classList.add("err");
+        badgeEl.textContent = "0";
+        badgeEl.classList.add("hidden");
+        return;
+      }
 
       try {
-        const resp = await fetch(`${API_BASE}/pacientes/${cpfPaciente}/metas`);
+        const resp = await fetch(`${API_BASE}/pacientes/${pacienteId}/notificacoes`);
+
         if (!resp.ok) {
-          const data = await resp.json().catch(() => null);
-          console.error("Erro ao buscar metas:", resp.status, data);
-          listaEl.textContent = "Erro ao carregar metas.";
-          msgEl.textContent = (data && data.detail) || "Verifique o backend.";
+          let dataErro = null;
+          try {
+            dataErro = await resp.json();
+          } catch (_) {}
+          console.error("Erro ao buscar notificações:", resp.status, dataErro);
+          msgEl.textContent =
+            (dataErro && dataErro.detail) ||
+            `Erro ao buscar notificações (${resp.status}).`;
           msgEl.classList.add("err");
+          badgeEl.textContent = "0";
+          badgeEl.classList.add("hidden");
           return;
         }
 
-        const metas = await resp.json();
-        if (!Array.isArray(metas) || metas.length === 0) {
-          listaEl.textContent = "Nenhuma meta cadastrada para você até o momento.";
+        const notificacoes = await resp.json();
+        const qtd = Array.isArray(notificacoes) ? notificacoes.length : 0;
+
+        if (qtd === 0) {
+          vazioEl.style.display = "block";
+          badgeEl.textContent = "0";
+          badgeEl.classList.add("hidden");
+          msgEl.textContent = "Nenhuma notificação por enquanto.";
+          msgEl.classList.add("ok");
           return;
         }
 
-        listaEl.innerHTML = "";
-        metas.forEach((m) => {
+        badgeEl.textContent = qtd;
+        badgeEl.classList.remove("hidden");
+
+        notificacoes.forEach((noti) => {
           const div = document.createElement("div");
-          div.className = "meta-item";
+          div.className = "notif-item";
+
+          const tipo = noti.tipo || "Notificação";
+          const mensagem = noti.mensagem || noti.message || JSON.stringify(noti);
+          const dataStr = noti.data_hora || noti.created_at || null;
+
+          let dataFormatada = "";
+          if (dataStr) {
+            const d = new Date(dataStr);
+            if (!isNaN(d.getTime())) {
+              dataFormatada = d.toLocaleString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+            } else {
+              dataFormatada = dataStr;
+            }
+          } else {
+            dataFormatada = "-";
+          }
+
           div.innerHTML = `
-            <strong>${m.descricao || "Meta"}</strong><br>
-            Critério: ${m.criterio_sucesso || "-"}<br>
-            Período: ${m.data_inicio || m.periodo_validade || "-"} até ${m.data_fim || "-"}<br>
-            <span class="meta-status">${m.status || "sem status"}</span>
-          `;
-          listaEl.appendChild(div);
-        });
-
-      } catch (err) {
-        console.error("Erro inesperado ao buscar metas:", err);
-        listaEl.textContent = "Erro inesperado ao carregar metas.";
-        msgEl.textContent = "Veja o console para mais detalhes.";
-        msgEl.classList.add("err");
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      atualizarHeader();
-      // Se quiser carregar automaticamente ao entrar:
-      // carregarMetas();
-    });
-  </script>
-</body>
-</html>
+            <div class="notif-item-header">
+              <span class="notif-item

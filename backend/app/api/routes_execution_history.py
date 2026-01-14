@@ -9,7 +9,7 @@ from app.schemas.execution_history import (
     ExecutionHistoryResponse,
     PeriodFilter
 )
-
+from app.models.patient import Patient  # 👈 IMPORTANTE: pra validar se o paciente existe
 
 router = APIRouter()
 
@@ -38,18 +38,21 @@ def get_execution_history(
 ):
     """
     Obtém o histórico de execução de exercícios de um paciente.
-    
-    Retorna uma lista de sessões de execução contendo:
-    - Data da execução
-    - Exercício realizado
-    - Status (concluído, parcial, não concluído)
-    - Nível de dor (se disponível)
-    - Informações de conclusão (repetições, séries, duração)
-    
-    Se não houver histórico, retorna uma mensagem informativa.
+
+    - Se o paciente **não existir**, retorna 404.
+    - Se existir, retorna o histórico no período escolhido
+      (ou mensagem avisando que não há dados).
     """
+    # ✅ 1) Verifica se o paciente existe no banco
+    paciente = session.get(Patient, patient_id)
+    if not paciente:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Paciente com ID {patient_id} não encontrado."
+        )
+
+    # ✅ 2) Se existe, segue para buscar o histórico normalmente
     try:
-        # Buscar histórico
         history_items, period_start, period_end, total_executions = (
             ExecutionHistoryService.get_execution_history_summary(
                 session=session,
@@ -59,10 +62,9 @@ def get_execution_history(
                 end_date=end_date
             )
         )
-        
-        # Verificar se há dados
+
         has_data = total_executions > 0
-        
+
         response = ExecutionHistoryResponse(
             patient_id=patient_id,
             period_start=period_start,
@@ -72,9 +74,9 @@ def get_execution_history(
             has_data=has_data,
             message=None if has_data else "Ainda não foram registrados exercícios para este período."
         )
-        
+
         return response
-        
+
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

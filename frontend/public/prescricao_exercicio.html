@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prescrever Exercício - MoveOn</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 720px;
+      padding: 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+    }
+
+    a.back {
+      display: inline-block;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+    }
+
+    a.back:hover {
+      text-decoration: underline;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.5rem;
+      color: #111827;
+    }
+
+    p.sub {
+      margin: 0 0 18px;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: #374151;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 9px 11px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px #2563eb33;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-primary {
+      margin-top: 18px;
+      width: 100%;
+      padding: 11px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .msg {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .msg.ok {
+      color: #166534;
+      background: #ecfdf5;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+
+    .msg.err {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 8px 10px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="card">
+      <a href="fisio_area.html" class="back">← Voltar para a área do fisioterapeuta</a>
+
+      <h1>Prescrever exercício</h1>
+      <p class="sub">
+        Selecione um exercício e defina os parâmetros para o paciente.
+      </p>
+
+      <label for="exercise">Exercício</label>
+      <select id="exercise">
+        <option value="">Carregando exercícios...</option>
+      </select>
+
+      <div class="grid">
+        <div>
+          <label for="series">Séries</label>
+          <input type="number" id="series" min="1" />
+        </div>
+
+        <div>
+          <label for="repetitions">Repetições</label>
+          <input type="number" id="repetitions" min="1" />
+        </div>
+
+        <div>
+          <label for="duration">Duração (min)</label>
+          <input type="number" id="duration" min="1" />
+        </div>
+
+        <div>
+          <label for="valid_until">Válido até</label>
+          <input type="date" id="valid_until" />
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="prescrever()">
+        Prescrever exercício
+      </button>
+
+      <div id="msg-ok" class="msg ok"></div>
+      <div id="msg-err" class="msg err"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    const params = new URLSearchParams(window.location.search);
+    const patientId = params.get("patient_id");
+
+    const exerciseSelect = document.getElementById("exercise");
+    const msgOk = document.getElementById("msg-ok");
+    const msgErr = document.getElementById("msg-err");
+
+    function showError(text) {
+      msgErr.textContent = text;
+      msgErr.style.display = "block";
+      msgOk.style.display = "none";
+    }
+
+    function showSuccess(text) {
+      msgOk.textContent = text;
+      msgOk.style.display = "block";
+      msgErr.style.display = "none";
+    }
+
+    async function carregarExercicios() {
+      try {
+        const resp = await fetch(`${API_BASE}/exercises`);
+        const data = await resp.json();
+
+        exerciseSelect.innerHTML = '<option value="">Selecione um exercício</option>';
+
+        data.forEach(ex => {
+          const opt = document.createElement("option");
+          opt.value = ex.id;
+          opt.textContent = ex.name;
+          exerciseSelect.appendChild(opt);
+        });
+
+      } catch {
+        exerciseSelect.innerHTML = '<option value="">Erro ao carregar exercícios</option>';
+      }
+    }
+
+    async function prescrever() {
+      msgOk.style.display = "none";
+      msgErr.style.display = "none";
+
+      if (!patientId) {
+        showError("Paciente não identificado.");
+        return;
+      }
+
+      const body = {
+        patient_id: Number(patientId),
+        exercise_id: Number(exerciseSelect.value),
+        series: Number(document.getElementById("series").value),
+        repetitions: Number(document.getElementById("repetitions").value),
+        duration_minutes: Number(document.getElementById("duration").value),
+        valid_until: document.getElementById("valid_until").value
+      };
+
+      if (!body.exercise_id) {
+        showError("Selecione um exercício.");
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${API_BASE}/prescriptions`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          showError(data.detail || "Erro ao prescrever exercício.");
+          return;
+        }
+
+        showSuccess("Exercício prescrito com sucesso.");
+
+      } catch (err) {
+        showError("Erro inesperado ao prescrever exercício.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", carregarExercicios);
+  </script>
+</body>
+</html>

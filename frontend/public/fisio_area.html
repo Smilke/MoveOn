@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Área do Fisioterapeuta - MoveOn</title>
+
   <style>
     body {
       margin: 0;
@@ -10,38 +11,49 @@
       background: #f3f4f6;
       color: #111827;
     }
+
     .page {
       max-width: 960px;
       margin: 40px auto;
       padding: 0 16px 80px;
     }
+
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 32px;
+      gap: 14px;
+      flex-wrap: wrap;
     }
+
     h1 {
       font-size: 1.8rem;
       margin: 0 0 4px 0;
     }
+
     p.sub {
       margin: 0;
       color: #6b7280;
       font-size: 0.95rem;
     }
+
     .auth-info {
       text-align: right;
       font-size: 0.9rem;
+      min-width: 220px;
     }
+
     .auth-info span.status {
       color: #6b7280;
       display: block;
     }
+
     .auth-info span.nome {
       font-weight: 600;
       display: block;
     }
+
     .btn-sair {
       margin-top: 6px;
       padding: 6px 12px;
@@ -52,6 +64,7 @@
       font-size: 0.8rem;
       cursor: pointer;
     }
+
     .btn-sair:hover {
       background: #fecaca;
     }
@@ -63,19 +76,22 @@
       justify-content: center;
       margin-bottom: 32px;
     }
+
     .card {
       background: #ffffff;
       border-radius: 16px;
-      padding: 24px 24px 20px;
+      padding: 24px;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
       max-width: 360px;
       flex: 1 1 260px;
     }
+
     .card h2 {
       margin-top: 0;
       margin-bottom: 8px;
       font-size: 1.3rem;
     }
+
     .card p {
       margin-top: 0;
       margin-bottom: 16px;
@@ -83,6 +99,7 @@
       font-size: 0.95rem;
       line-height: 1.4;
     }
+
     .btn-primary {
       display: inline-block;
       padding: 10px 18px;
@@ -96,6 +113,7 @@
       cursor: pointer;
       text-align: center;
     }
+
     .btn-primary:hover {
       background: #1d4ed8;
     }
@@ -105,33 +123,36 @@
       border-radius: 16px;
       padding: 24px;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
-      margin-top: 16px;
     }
+
     .card-wide-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .card-wide h2 {
-      margin: 0;
-      font-size: 1.15rem;
-    }
+
     .lista-pacientes {
       font-size: 0.95rem;
       color: #4b5563;
     }
+
     .paciente-item {
-      padding: 6px 0;
+      padding: 10px 0;
       border-bottom: 1px solid #e5e7eb;
     }
+
     .paciente-item:last-child {
       border-bottom: none;
     }
+
     .msg {
       font-size: 0.9rem;
       margin-top: 8px;
     }
+
     .msg.err { color: #dc2626; }
     .msg.ok  { color: #16a34a; }
 
@@ -143,14 +164,13 @@
     }
   </style>
 </head>
+
 <body>
   <div class="page">
     <header>
       <div>
         <h1>Área do Fisioterapeuta</h1>
-        <p class="sub">
-          Aqui você gerencia seus pacientes, metas, exercícios e acompanha os feedbacks.
-        </p>
+        <p class="sub">Gerencie pacientes, metas, exercícios e feedbacks.</p>
       </div>
 
       <div class="auth-info">
@@ -160,68 +180,55 @@
       </div>
     </header>
 
+    <!-- CARDS DO MENU -->
     <section class="cards">
       <article class="card">
-        <h2>Cadastrar fisioterapeuta</h2>
-        <p>
-          Cadastre um novo fisioterapeuta na plataforma para poder gerenciar pacientes
-          e acompanhar os tratamentos.
-        </p>
-        <a href="fisio_cadastro.html" class="btn-primary">Ir para cadastro</a>
-      </article>
-
-      <article class="card">
-        <h2>Vincular paciente</h2>
-        <p>
-          Cadastre um novo paciente informando o CPF do fisioterapeuta responsável,
-          vinculando esse paciente diretamente a você.
-        </p>
-        <a href="paciente_cadastro.html" class="btn-primary">Cadastrar paciente</a>
+        <h2>Cadastrar paciente</h2>
+        <p>Cadastrar novo paciente no sistema e vincular ao fisioterapeuta.</p>
+        <a href="paciente_cadastro.html" class="btn-primary">Cadastrar</a>
       </article>
 
       <article class="card">
         <h2>Metas dos pacientes</h2>
-        <p>
-          Defina novas metas e atualize o status de cada paciente de acordo com
-          a evolução do tratamento.
-        </p>
+        <p>Defina metas e acompanhe a evolução do tratamento de cada paciente.</p>
         <a href="fisio_metas.html" class="btn-primary">Gerenciar metas</a>
       </article>
 
       <article class="card">
         <h2>Feedbacks dos pacientes</h2>
-        <p>
-          Veja os feedbacks enviados pelos pacientes sobre seus atendimentos e
-          acompanhe a percepção deles sobre o tratamento.
-        </p>
+        <p>Veja os feedbacks enviados pelos pacientes e acompanhe a percepção deles.</p>
         <a href="fisio_feedbacks.html" class="btn-primary">Ver feedbacks</a>
       </article>
 
       <article class="card">
-        <h2>Exercícios gamificados</h2>
-        <p>
-          Cadastre novos exercícios gamificados e consulte a biblioteca disponível
-          para prescrição aos pacientes.
-        </p>
-        <a href="fisio_exercicios.html" class="btn-primary">Gerenciar exercícios</a>
+        <h2>Exercícios</h2>
+        <p>Gerencie exercícios gamificados e consulte a biblioteca disponível.</p>
+        <a href="fisio_exercicios.html" class="btn-primary">Acessar</a>
       </article>
     </section>
 
+    <!-- LISTA DE PACIENTES -->
     <section class="card-wide">
       <div class="card-wide-header">
-        <h2>Meus pacientes cadastrados</h2>
-        <button class="btn-primary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="carregarPacientes()">
-          Atualizar lista
+        <h2>Meus pacientes</h2>
+        <button
+          class="btn-primary"
+          style="padding:6px 14px;font-size:.85rem"
+          onclick="carregarPacientes()"
+        >
+          Atualizar
         </button>
       </div>
+
       <div id="lista-pacientes" class="lista-pacientes">
-        Não foi possível identificar o fisioterapeuta logado.
+        Clique em “Atualizar” para carregar seus pacientes.
       </div>
+
       <div id="mensagem-pacientes" class="msg"></div>
     </section>
 
     <footer>
-      Protótipo de navegação — uso interno do time MoveOn.
+      MoveOn • Protótipo funcional
     </footer>
   </div>
 
@@ -231,12 +238,7 @@
     function obterUsuarioLogado() {
       const raw = localStorage.getItem("moveon_usuario_logado");
       if (!raw) return null;
-      try {
-        return JSON.parse(raw);
-      } catch (e) {
-        console.error("Erro ao ler usuário logado do localStorage:", e);
-        return null;
-      }
+      try { return JSON.parse(raw); } catch { return null; }
     }
 
     function atualizarHeader() {
@@ -256,7 +258,6 @@
 
     function sair() {
       localStorage.removeItem("moveon_usuario_logado");
-      // volta pra tela de login, como você pediu
       window.location.href = "login.html";
     }
 
@@ -265,24 +266,31 @@
       const listaEl = document.getElementById("lista-pacientes");
       const msgEl = document.getElementById("mensagem-pacientes");
 
+      listaEl.innerHTML = "";
       msgEl.textContent = "";
       msgEl.className = "msg";
 
       if (!usuario || usuario.tipo !== "fisioterapeuta") {
-        listaEl.textContent = "Não foi possível identificar o fisioterapeuta logado.";
-        msgEl.textContent = "Faça login como fisioterapeuta para ver seus pacientes.";
+        listaEl.textContent = "Faça login como fisioterapeuta.";
+        msgEl.textContent = "Usuário não autenticado.";
         msgEl.classList.add("err");
         return;
       }
 
-      const cpfFisio = usuario.cpf;
+      const cpf = usuario.cpf;
+      if (!cpf) {
+        listaEl.textContent = "Não foi possível identificar o CPF do fisioterapeuta logado.";
+        msgEl.textContent = "Verifique o login (localStorage).";
+        msgEl.classList.add("err");
+        return;
+      }
 
       try {
-        const resp = await fetch(`${API_BASE}/fisioterapeutas/${cpfFisio}/pacientes`);
+        const resp = await fetch(`${API_BASE}/fisioterapeutas/${cpf}/pacientes`);
+
         if (!resp.ok) {
-          console.error("Erro ao buscar pacientes:", resp.status);
           listaEl.textContent = "Erro ao carregar pacientes.";
-          msgEl.textContent = "Verifique o backend ou o CPF do fisioterapeuta.";
+          msgEl.textContent = "Backend não respondeu corretamente.";
           msgEl.classList.add("err");
           return;
         }
@@ -290,33 +298,42 @@
         const pacientes = await resp.json();
 
         if (!Array.isArray(pacientes) || pacientes.length === 0) {
-          listaEl.textContent = "Nenhum paciente cadastrado para esse fisioterapeuta.";
+          listaEl.textContent = "Nenhum paciente cadastrado.";
           return;
         }
 
-        listaEl.innerHTML = "";
-        pacientes.forEach((p) => {
+        pacientes.forEach(p => {
           const div = document.createElement("div");
           div.className = "paciente-item";
           div.innerHTML = `
-            <strong>${p.nome || "Paciente"}</strong><br>
-            CPF: ${p.cpf || "-"} | Idade: ${p.idade ?? "-"} | Situação: ${p.situacao || "-"}
+            <strong>${p.nome ?? "Paciente"}</strong><br>
+            E-mail: ${p.email ?? "-"}<br>
+            ID do paciente: ${p.id ?? "-"}<br><br>
+            <button class="btn-primary" style="padding:6px 14px;font-size:.8rem"
+              onclick="irParaPrescricao(${p.id})">
+              Prescrever exercícios
+            </button>
           `;
           listaEl.appendChild(div);
         });
+
       } catch (err) {
-        console.error("Erro inesperado ao buscar pacientes:", err);
-        listaEl.textContent = "Erro inesperado ao carregar pacientes.";
-        msgEl.textContent = "Veja o console para mais detalhes.";
+        console.error(err);
+        listaEl.textContent = "Erro inesperado.";
+        msgEl.textContent = "Veja o console.";
         msgEl.classList.add("err");
       }
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      atualizarHeader();
-      // se quiser já carregar na entrada, descomenta:
-      // carregarPacientes();
-    });
+    function irParaPrescricao(patientId) {
+      if (!patientId) {
+        alert("Paciente sem ID no banco. Cadastre/sincronize primeiro.");
+        return;
+      }
+      window.location.href = `prescricao_exercicio.html?patient_id=${patientId}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", atualizarHeader);
   </script>
 </body>
 </html>

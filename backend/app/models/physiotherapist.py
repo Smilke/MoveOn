@@ -9,6 +9,7 @@ class Physiotherapist(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=255)
+    cpf : str = Field(max_length=11, unique=True, index=True)
     email: str = Field(max_length=255, unique=True, index=True)
     license_number: str = Field(max_length=50, unique=True, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
