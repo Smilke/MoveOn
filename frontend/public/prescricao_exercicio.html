@@ -3,254 +3,213 @@
 <head>
   <meta charset="UTF-8" />
   <title>Prescrever Exercício - MoveOn</title>
-
   <style>
-    body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #f3f4f6;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-    }
-
-    .page {
-      width: 100%;
-      max-width: 720px;
-      padding: 16px;
-    }
-
-    .card {
-      background: #ffffff;
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
-    }
-
-    a.back {
-      display: inline-block;
-      margin-bottom: 12px;
-      font-size: 0.85rem;
-      color: #4b5563;
-      text-decoration: none;
-    }
-
-    a.back:hover {
-      text-decoration: underline;
-    }
-
-    h1 {
-      margin: 0 0 6px;
-      font-size: 1.5rem;
-      color: #111827;
-    }
-
-    p.sub {
-      margin: 0 0 18px;
-      color: #6b7280;
-      font-size: 0.95rem;
-    }
-
-    label {
-      display: block;
-      margin-top: 12px;
-      font-size: 0.85rem;
-      color: #374151;
-    }
-
-    select, input {
-      width: 100%;
-      padding: 9px 11px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      font-size: 0.9rem;
-      margin-top: 4px;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: #2563eb;
-      box-shadow: 0 0 0 1px #2563eb33;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .btn-primary {
-      margin-top: 18px;
-      width: 100%;
-      padding: 11px;
-      border-radius: 999px;
-      border: none;
-      background: #2563eb;
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-    }
-
-    .btn-primary:hover {
-      background: #1d4ed8;
-    }
-
-    .msg {
-      margin-top: 12px;
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .msg.ok {
-      color: #166534;
-      background: #ecfdf5;
-      padding: 8px 10px;
-      border-radius: 10px;
-    }
-
-    .msg.err {
-      color: #b91c1c;
-      background: #fee2e2;
-      padding: 8px 10px;
-      border-radius: 10px;
-    }
+    body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#111827}
+    .page{max-width:820px;margin:40px auto;padding:0 16px 70px}
+    .card{background:#fff;border-radius:16px;padding:22px;box-shadow:0 10px 25px rgba(15,23,42,.08)}
+    .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+    a.back{color:#4b5563;text-decoration:none;font-size:.9rem}
+    a.back:hover{text-decoration:underline}
+    h1{margin:0;font-size:1.5rem}
+    p.sub{margin:6px 0 0;color:#6b7280;font-size:.95rem}
+    .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+    @media(min-width:720px){.grid{grid-template-columns:1fr 1fr}}
+    label{display:block;font-size:.86rem;color:#374151;margin-bottom:4px}
+    input,select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #d1d5db;font-size:.95rem;box-sizing:border-box}
+    input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 1px #2563eb33}
+    .full{grid-column:1/-1}
+    .btn{display:inline-block;padding:10px 18px;border-radius:999px;border:none;background:#2563eb;color:#fff;font-weight:700;font-size:.95rem;cursor:pointer}
+    .btn:hover{background:#1d4ed8}
+    .btn-secondary{background:#e5e7eb;color:#111827}
+    .btn-secondary:hover{background:#d1d5db}
+    .row-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .msg{margin-top:12px;font-size:.9rem}
+    .msg.ok{color:#16a34a}
+    .msg.err{color:#dc2626}
+    .hint{margin-top:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;color:#4b5563;font-size:.9rem}
   </style>
 </head>
-
 <body>
   <div class="page">
     <div class="card">
-      <a href="fisio_area.html" class="back">← Voltar para a área do fisioterapeuta</a>
+      <div class="top">
+        <a class="back" href="fisio_area.html">← Voltar para a área do fisioterapeuta</a>
+      </div>
 
       <h1>Prescrever exercício</h1>
-      <p class="sub">
-        Selecione um exercício e defina os parâmetros para o paciente.
-      </p>
+      <p class="sub">Selecione um exercício e defina os parâmetros para o paciente.</p>
 
-      <label for="exercise">Exercício</label>
-      <select id="exercise">
-        <option value="">Carregando exercícios...</option>
-      </select>
+      <div class="hint">
+        <input type="text" id="patient-id-input" placeholder="ID do paciente">
+      </div>
 
       <div class="grid">
-        <div>
-          <label for="series">Séries</label>
-          <input type="number" id="series" min="1" />
+        <div class="full">
+          <label for="exerciseSelect">Exercício</label>
+          <select id="exerciseSelect"></select>
         </div>
 
         <div>
           <label for="repetitions">Repetições</label>
-          <input type="number" id="repetitions" min="1" />
+          <input id="repetitions" type="number" min="1" value="10" />
         </div>
 
         <div>
-          <label for="duration">Duração (min)</label>
-          <input type="number" id="duration" min="1" />
+          <label for="series">Séries</label>
+          <input id="series" type="number" min="1" value="3" />
         </div>
 
         <div>
-          <label for="valid_until">Válido até</label>
-          <input type="date" id="valid_until" />
+          <label for="duration">Duração (minutos) (opcional)</label>
+          <input id="duration" type="number" min="1" placeholder="Ex.: 15" />
+        </div>
+
+        <div>
+          <label for="weekly">Frequência semanal</label>
+          <input id="weekly" type="number" min="1" value="3" />
+        </div>
+
+        <div class="full">
+          <label for="notes">Observações (opcional)</label>
+          <input id="notes" type="text" placeholder="Ex.: manter postura / sem dor" />
         </div>
       </div>
 
-      <button class="btn-primary" onclick="prescrever()">
-        Prescrever exercício
-      </button>
+      <div class="row-actions">
+        <button class="btn" onclick="prescrever()">Prescrever</button>
+        <button class="btn btn-secondary" onclick="carregarExercicios()">Recarregar exercícios</button>
+      </div>
 
-      <div id="msg-ok" class="msg ok"></div>
-      <div id="msg-err" class="msg err"></div>
+      <div id="msg" class="msg"></div>
     </div>
   </div>
 
   <script>
     const API_BASE = "http://127.0.0.1:8000/api";
 
-    const params = new URLSearchParams(window.location.search);
-    const patientId = params.get("patient_id");
-
-    const exerciseSelect = document.getElementById("exercise");
-    const msgOk = document.getElementById("msg-ok");
-    const msgErr = document.getElementById("msg-err");
-
-    function showError(text) {
-      msgErr.textContent = text;
-      msgErr.style.display = "block";
-      msgOk.style.display = "none";
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
     }
 
-    function showSuccess(text) {
-      msgOk.textContent = text;
-      msgOk.style.display = "block";
-      msgErr.style.display = "none";
+    function usuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function setMsg(text, type) {
+      const el = document.getElementById("msg");
+      el.className = "msg " + (type || "");
+      el.textContent = text || "";
     }
 
     async function carregarExercicios() {
+      setMsg("", "");
+      const select = document.getElementById("exerciseSelect");
+      select.innerHTML = `<option value="">Carregando...</option>`;
+
       try {
-        const resp = await fetch(`${API_BASE}/exercises`);
+        const resp = await fetch(`${API_BASE}/exercises?active_only=true`);
         const data = await resp.json();
 
-        exerciseSelect.innerHTML = '<option value="">Selecione um exercício</option>';
+        if (!resp.ok) {
+          select.innerHTML = `<option value="">Erro ao carregar</option>`;
+          setMsg((data && data.detail) ? data.detail : "Erro ao carregar exercícios.", "err");
+          return;
+        }
 
+        if (!Array.isArray(data) || data.length === 0) {
+          select.innerHTML = `<option value="">Nenhum exercício cadastrado</option>`;
+          return;
+        }
+
+        select.innerHTML = "";
         data.forEach(ex => {
           const opt = document.createElement("option");
           opt.value = ex.id;
-          opt.textContent = ex.name;
-          exerciseSelect.appendChild(opt);
+          const cat = ex.category ? ` • ${ex.category}` : "";
+          opt.textContent = `#${ex.id} — ${ex.name}${cat}`;
+          select.appendChild(opt);
         });
-
-      } catch {
-        exerciseSelect.innerHTML = '<option value="">Erro ao carregar exercícios</option>';
+      } catch (e) {
+        console.error(e);
+        select.innerHTML = `<option value="">Erro ao carregar</option>`;
+        setMsg("Erro inesperado ao carregar exercícios (veja o console).", "err");
       }
     }
 
     async function prescrever() {
-      msgOk.style.display = "none";
-      msgErr.style.display = "none";
+      setMsg("", "");
 
+      const patientId = Number(document.getElementById("patient-id-input").value);7
+      console.log(patientId);
       if (!patientId) {
-        showError("Paciente não identificado.");
+        setMsg("Patient_id não encontrado na URL. Volte e clique em 'Prescrever exercícios' no paciente.", "err");
         return;
       }
+
+      const fisio = usuarioLogado();
+      if (!fisio || fisio.tipo !== "fisioterapeuta") {
+        setMsg("Faça login como fisioterapeuta para prescrever.", "err");
+        return;
+      }
+
+      const exerciseId = Number(document.getElementById("exerciseSelect").value);
+      const repetitions = Number(document.getElementById("repetitions").value);
+      const series = Number(document.getElementById("series").value);
+      const duration = document.getElementById("duration").value.trim();
+      const weekly = Number(document.getElementById("weekly").value);
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!exerciseId) { setMsg("Selecione um exercício.", "err"); return; }
+      if (!repetitions || repetitions < 1) { setMsg("Repetições inválidas.", "err"); return; }
+      if (!series || series < 1) { setMsg("Séries inválidas.", "err"); return; }
+      if (!weekly || weekly < 1) { setMsg("Frequência semanal inválida.", "err"); return; }
 
       const body = {
-        patient_id: Number(patientId),
-        exercise_id: Number(exerciseSelect.value),
-        series: Number(document.getElementById("series").value),
-        repetitions: Number(document.getElementById("repetitions").value),
-        duration_minutes: Number(document.getElementById("duration").value),
-        valid_until: document.getElementById("valid_until").value
+          difficulty_level: "intermediate",
+          exercise_id: exerciseId,
+          duration_minutes: duration ? Number(duration) : null,
+          notes: notes || null,
+          patient_id: patientId,
+          repetitions: repetitions,
+          series: series,
+          weekly_frequency: weekly
       };
 
-      if (!body.exercise_id) {
-        showError("Selecione um exercício.");
-        return;
-      }
+      console.log(body);
 
       try {
-        const resp = await fetch(`${API_BASE}/prescriptions`, {
+        const resp = await fetch(`${API_BASE}/prescriptions?physiotherapist_id=${fisio.id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body)
         });
 
-        const data = await resp.json();
+        const data = await resp.json().catch(() => ({}));
+        
+        console.log(resp);
 
         if (!resp.ok) {
-          showError(data.detail || "Erro ao prescrever exercício.");
+          console.error("Erro prescrição:", data);
+          setMsg((data && data.detail) ? data.detail : "Erro ao prescrever.", "err");
           return;
         }
 
-        showSuccess("Exercício prescrito com sucesso.");
-
-      } catch (err) {
-        showError("Erro inesperado ao prescrever exercício.");
+        setMsg("Prescrição criada com sucesso! ✅", "ok");
+        // opcional: limpar alguns campos
+        document.getElementById("notes").value = "";
+      } catch (e) {
+        console.error(e);
+        setMsg("Erro inesperado ao prescrever (veja o console).", "err");
       }
     }
 
-    document.addEventListener("DOMContentLoaded", carregarExercicios);
+    document.addEventListener("DOMContentLoaded", () => {
+      const patientId = getQueryParam("patient_id");
+      carregarExercicios();
+    });
   </script>
 </body>
 </html>

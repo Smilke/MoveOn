@@ -59,7 +59,7 @@ def create_app() -> FastAPI:
 
     # pacientes
     app.include_router(
-        paciente_router,
+        patients_db_router,
         prefix=api_prefix,
         tags=["pacientes"],
     )
