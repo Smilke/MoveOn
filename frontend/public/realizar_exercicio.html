@@ -88,6 +88,10 @@
                             placeholder="Ex: Senti um pouco de dificuldade na última série..."></textarea>
                     </div>
 
+                    <div class="full">
+                        <label for="video-upload">Anexar vídeo da execução (opcional)</label>
+                        <input type="file" id="video-upload" accept="video/*" style="width:100%; margin-bottom:10px">
+                    </div>
                     <div class="full" style="margin-top:10px">
                         <button class="btn" style="width:100%; padding:14px" onclick="salvarExecucao()">✅ Finalizar
                             Exercicio</button>
@@ -143,10 +147,13 @@
             }
         }
 
+
         async function salvarExecucao() {
             const completed = document.getElementById("check-completed").checked;
             const pain = document.getElementById("pain-level").value;
             const feedback = document.getElementById("feedback").value;
+            const videoInput = document.getElementById("video-upload");
+            const videoFile = videoInput.files[0];
 
             // Dados payload
             const payload = {
@@ -170,8 +177,28 @@
                     body: JSON.stringify(payload)
                 });
 
-                    if (resp.ok) {
-                    alert("Parabéns! Exercício registrado com sucesso. 🎉");
+                if (resp.ok) {
+                    // Se houver vídeo, faz upload
+                    if (videoFile) {
+                        btn.textContent = "Enviando vídeo...";
+                        const formData = new FormData();
+                        formData.append("file", videoFile);
+                        // Envia patient_id e exercise_id obrigatórios
+                        const usuario = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
+                        formData.append("patient_id", usuario && usuario.id ? usuario.id : "unknown");
+                        formData.append("exercise_id", prescriptionData && prescriptionData.exercise && prescriptionData.exercise.id ? prescriptionData.exercise.id : "unknown");
+                        const uploadResp = await fetch(`${API_BASE}/upload/video`, {
+                            method: "POST",
+                            body: formData
+                        });
+                        if (uploadResp.ok) {
+                            alert("Exercício e vídeo enviados com sucesso! O feedback será exibido em breve.");
+                        } else {
+                            alert("Execução salva, mas houve erro ao enviar o vídeo.");
+                        }
+                    } else {
+                        alert("Parabéns! Exercício registrado com sucesso. 🎉");
+                    }
                     window.location.href = "/paciente_area";
                 } else {
                     const err = await resp.json();

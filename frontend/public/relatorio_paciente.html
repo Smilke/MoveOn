@@ -69,6 +69,12 @@
                     </tr>
                 </tbody>
             </table>
+
+            <div style="margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                <h3>Vídeos enviados e análise</h3>
+                <div id="videos-status" style="font-size:0.9rem; color:#6b7280; margin-top:6px;">Carregando vídeos...</div>
+                <div id="lista-videos" style="margin-top: 10px;"></div>
+            </div>
         </div>
     </div>
 
@@ -78,6 +84,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const patientId = urlParams.get("patient_id");
         let chartInstance = null;
+
+        const fisio = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
 
         if (!patientId) {
             alert("Paciente não especificado");
@@ -141,9 +149,85 @@
                     `;
                 });
 
+                // Carregar vídeos/feedbacks (independente do relatório)
+                carregarVideosFeedback();
+
             } catch (e) {
                 console.error(e);
                 tbody.innerHTML = `<tr><td colspan="5">Erro de conexão</td></tr>`;
+            }
+        }
+
+        async function carregarVideosFeedback() {
+            const statusEl = document.getElementById("videos-status");
+            const listEl = document.getElementById("lista-videos");
+
+            if (!fisio || fisio.tipo !== "fisioterapeuta" || !fisio.id) {
+                statusEl.textContent = "Faça login como fisioterapeuta para ver vídeos.";
+                listEl.innerHTML = "";
+                return;
+            }
+
+            statusEl.textContent = "Carregando vídeos...";
+            listEl.innerHTML = "";
+
+            try {
+                const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/video-feedbacks`);
+                if (!resp.ok) {
+                    statusEl.textContent = "Não foi possível carregar os vídeos (sem acesso ou erro).";
+                    return;
+                }
+                const data = await resp.json();
+                if (!Array.isArray(data) || data.length === 0) {
+                    statusEl.textContent = "Nenhum vídeo enviado ainda.";
+                    return;
+                }
+
+                statusEl.textContent = "";
+                data.forEach((fb) => {
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    card.style.boxShadow = "none";
+                    card.style.border = "1px solid #e5e7eb";
+                    card.style.marginBottom = "10px";
+
+                    const ts = fb.timestamp ? new Date(fb.timestamp).toLocaleString('pt-BR') : "data desconhecida";
+                    const obs = Array.isArray(fb.observacoes) && fb.observacoes.length
+                        ? `<ul style='margin:6px 0 0 0; padding-left:18px; color:#374151; font-size:0.93em'>${fb.observacoes.map(o=>`<li>${o}</li>`).join('')}</ul>`
+                        : "";
+                    const detalhes = Array.isArray(fb.detalhes) && fb.detalhes.length
+                        ? `<details style='margin-top:6px'><summary>Detalhes das repetições</summary><ul style='margin:4px 0 0 0; padding-left:18px; color:#374151; font-size:0.92em'>${fb.detalhes.map(rep => `<li>Rep ${rep.rep_index}: ${rep.note} (Ângulo: ${rep.min_angle?.toFixed?.(1) ?? rep.min_angle}° - ${rep.max_angle?.toFixed?.(1) ?? rep.max_angle}°)</li>`).join('')}</ul></details>`
+                        : "";
+
+                    let videoHtml = "";
+                    if (fb.video_filename) {
+                        const videoUrl = `${API_BASE}/videos/${encodeURIComponent(fb.video_filename)}`;
+                        videoHtml = `
+                          <div style='margin-top:10px'>
+                            <video controls style='width:100%; max-height:320px; border-radius:12px; background:#111827' src='${videoUrl}'></video>
+                            <div style='margin-top:6px; font-size:0.85rem'>
+                              <a href='${videoUrl}' target='_blank' rel='noopener'>Baixar/abrir vídeo</a>
+                            </div>
+                          </div>
+                        `;
+                    } else {
+                        videoHtml = `<div style='margin-top:10px; font-size:0.9rem; color:#6b7280'>Vídeo não disponível (log antigo sem referência ao arquivo).</div>`;
+                    }
+
+                    card.innerHTML = `
+                      <div style='font-size:0.95rem; color:#0369a1; margin-bottom:4px'><b>${fb.exercise_name || `Exercício ID: ${fb.exercise_id || "?"}`}</b> (${ts})</div>
+                      <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Status:</b> ${fb.status || '-'}</div>
+                      <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Repetições detectadas:</b> ${fb.repeticoes ?? '-'}</div>
+                      ${obs}
+                      ${detalhes}
+                      ${videoHtml}
+                    `;
+
+                    listEl.appendChild(card);
+                });
+            } catch (e) {
+                console.error(e);
+                statusEl.textContent = "Erro de conexão ao carregar vídeos.";
             }
         }
 
@@ -180,7 +264,10 @@
         }
 
         // Carregar inicial
-        document.addEventListener("DOMContentLoaded", () => carregarRelatorio('last_month'));
+        document.addEventListener("DOMContentLoaded", () => {
+            carregarRelatorio('last_month');
+            carregarVideosFeedback();
+        });
     </script>
     <script>
         (function(){

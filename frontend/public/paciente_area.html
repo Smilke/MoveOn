@@ -34,6 +34,16 @@
           <p style="font-size: 0.9rem; color: #9ca3af;">Nenhuma atividade recente encontrada.</p>
         </div>
       </div>
+
+      <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+        <h3 style="font-size: 1rem; color: #4b5563;">Feedback dos Vídeos Enviados</h3>
+        <div id="feedback-videos" style="margin-top: 10px;">
+          <div id="feedback-videos-status" style="font-size: 0.9rem; color: #f59e42; display:none; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="font-size:1.2em">⏳</span> Seu vídeo está sendo analisado, o feedback aparecerá aqui em breve.
+          </div>
+          <div id="feedback-videos-none" style="font-size: 0.9rem; color: #9ca3af; display:none;">Nenhum vídeo pendente ou feedback encontrado.</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -131,7 +141,93 @@
     document.addEventListener("DOMContentLoaded", () => {
       carregarExercicios();
       carregarHistorico();
+      carregarFeedbackVideos();
     });
+
+    async function carregarFeedbackVideos() {
+      const container = document.getElementById("feedback-videos");
+      const statusDiv = document.getElementById("feedback-videos-status");
+      const noneDiv = document.getElementById("feedback-videos-none");
+      statusDiv.style.display = "none";
+      noneDiv.style.display = "none";
+      try {
+        // Endpoint sugerido: /api/patients/{id}/video-feedbacks
+        const resp = await fetch(`${API_BASE}/patients/${usuario.id}/video-feedbacks`);
+        if (!resp.ok) {
+          container.innerHTML = `<div class=\"msg err\">Erro ao carregar feedbacks de vídeo</div>`;
+          return;
+        }
+        const data = await resp.json();
+        if (!data.length) {
+          // Nenhum feedback, nenhum vídeo pendente
+          statusDiv.style.display = "none";
+          noneDiv.style.display = "block";
+          return;
+        }
+        // Considera pendente quando ainda não há sinal de análise concluída
+        let pendente = false;
+        data.forEach(fb => {
+          const status = (fb.status || "").toLowerCase();
+          const temDados =
+            (fb.observacoes && fb.observacoes.length) ||
+            (fb.detalhes && Array.isArray(fb.detalhes) && fb.detalhes.length) ||
+            (fb.repeticoes !== null && fb.repeticoes !== undefined);
+          const concluido = status.includes("sucesso") || status.includes("success");
+          if (!concluido && !temDados) pendente = true;
+        });
+        if (pendente) {
+          statusDiv.style.display = "flex";
+        } else {
+          statusDiv.style.display = "none";
+        }
+        noneDiv.style.display = "none";
+        container.querySelectorAll('.card').forEach(e=>e.remove());
+        data.forEach(fb => {
+          const div = document.createElement("div");
+          div.className = "card";
+          div.style.boxShadow = "none";
+          div.style.border = "1px solid #e5e7eb";
+          div.style.marginBottom = "10px";
+          // Montar detalhes do feedback
+          let obsHtml = '';
+          if (fb.observacoes && fb.observacoes.length) {
+            obsHtml = `<ul style='margin:6px 0 0 0; padding-left:18px; color:#374151; font-size:0.93em'>` +
+              fb.observacoes.map(o => `<li>${o}</li>`).join('') + '</ul>';
+          }
+          let detalhesHtml = '';
+          if (fb.detalhes && Array.isArray(fb.detalhes) && fb.detalhes.length) {
+            detalhesHtml = `<details style='margin-top:6px'><summary>Detalhes das repetições</summary><ul style='margin:4px 0 0 0; padding-left:18px; color:#374151; font-size:0.92em'>` +
+              fb.detalhes.map(rep => `<li>Rep ${rep.rep_index}: ${rep.note} (Ângulo: ${rep.min_angle?.toFixed(1)}° - ${rep.max_angle?.toFixed(1)}°)</li>`).join('') + '</ul></details>';
+          }
+
+          const status = (fb.status || "").toLowerCase();
+          const concluido = status.includes("sucesso") || status.includes("success");
+          const feedbackText = (fb.feedback || "").trim();
+          const feedbackHtml = feedbackText
+            ? feedbackText
+            : (concluido ? "Análise concluída. Veja as observações abaixo." : "<span style='color:#f59e42'>Aguardando análise...</span>");
+
+          const exTitulo = (fb.exercise_name && String(fb.exercise_name).trim())
+            ? fb.exercise_name
+            : `Exercício ID: ${fb.exercise_id || "?"}`;
+
+          div.innerHTML = `
+            <div style=\"font-size:0.95rem; color:#0369a1; margin-bottom:4px\"><b>${exTitulo}</b> (${fb.timestamp ? new Date(fb.timestamp).toLocaleString('pt-BR') : "data desconhecida"})</div>
+            <div style=\"font-size:0.95rem; color:#374151; margin-bottom:4px\"><b>Status:</b> ${fb.status || "-"}</div>
+            <div style=\"font-size:0.95rem; color:#374151; margin-bottom:4px\"><b>Feedback:</b> ${feedbackHtml}</div>
+            <div style=\"font-size:0.95rem; color:#374151; margin-bottom:4px\"><b>Repetições detectadas:</b> ${fb.repeticoes ?? "-"}</div>
+            ${obsHtml}
+            ${detalhesHtml}
+          `;
+          container.appendChild(div);
+        });
+      } catch (e) {
+        statusDiv.style.display = "none";
+        noneDiv.style.display = "none";
+        console.error(e);
+        container.innerHTML = `<div class=\"msg err\">Erro de conexão ao buscar feedbacks</div>`;
+      }
+    }
   </script>
 </body>
 
