@@ -45,6 +45,32 @@ def _pending_feedback(patient_id: str, exercise_id: str, filename: str, note: st
         "Repetitions": 0,
         "feedback": "A análise do vídeo está em processamento.",
         "video_filename": filename,
+        "progress": 0,
+    }
+
+
+def _progress_feedback(
+    patient_id: str,
+    exercise_id: str,
+    filename: str,
+    progress: int,
+    frames_done: int,
+    frames_total: int,
+) -> Dict[str, Any]:
+    progress_clamped = max(0, min(int(progress), 100))
+    note = f"Analisando vídeo: {frames_done}/{frames_total} frames ({progress_clamped}%)"
+    return {
+        "ID_Paciente": patient_id,
+        "ID_Exercicio": exercise_id,
+        "Timestamp": datetime.utcnow().isoformat() + "Z",
+        "Status_Execucao": "Pendente",
+        "Observacoes_Tecnicas": [note],
+        "Repetitions": 0,
+        "feedback": f"A análise do vídeo está em processamento ({progress_clamped}%).",
+        "video_filename": filename,
+        "progress": progress_clamped,
+        "frames_done": frames_done,
+        "frames_total": frames_total,
     }
 
 
@@ -65,9 +91,33 @@ def analyze_and_log(patient_id: str, exercise_id: str, video_path: str, filename
     """Run analysis (blocking) and write a final log entry."""
     try:
         proc = get_processor()
-        feedback = engine.analyze_video(patient_id, exercise_id, video_path, processor=proc)
+
+        last_progress = -1
+
+        def _on_progress(pct: int, done: int, total: int) -> None:
+            nonlocal last_progress
+            try:
+                pct_i = int(pct)
+            except Exception:
+                return
+            if pct_i <= last_progress:
+                return
+            # Avoid writing 100% here; final log will mark completion.
+            if pct_i >= 100:
+                return
+            last_progress = pct_i
+            storage.save_feedback(_progress_feedback(patient_id, exercise_id, filename, pct_i, done, total))
+
+        feedback = engine.analyze_video(
+            patient_id,
+            exercise_id,
+            video_path,
+            processor=proc,
+            progress_cb=_on_progress,
+        )
         if isinstance(feedback, dict):
             feedback.setdefault("video_filename", filename)
+            feedback.setdefault("progress", 100)
         storage.save_feedback(feedback)
         return feedback
     except NotImplementedError:

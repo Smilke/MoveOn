@@ -40,6 +40,7 @@ async def upload_video(
             "Repetitions": 0,
             "feedback": "A análise do vídeo está em processamento.",
             "video_filename": filename,
+            "progress": 0,
         }
         try:
             storage.save_feedback(pending)

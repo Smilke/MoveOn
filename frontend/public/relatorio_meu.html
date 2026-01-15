@@ -105,16 +105,23 @@
             const completionRate = (ex.completion_rate !== undefined && ex.completion_rate !== null) ? `${Number(ex.completion_rate).toFixed(0)}%` : '-';
 
             const painLevels = Array.isArray(ex.pain_levels) ? ex.pain_levels : [];
-            const painText = painLevels.length
-              ? `Dor registrada: ${painLevels[painLevels.length - 1].pain_level}`
-              : 'Dor: -';
+            const latestPain = painLevels.length ? painLevels[0] : null;
+            const patientComments = [];
+            if (latestPain) {
+              if (latestPain.pain_level !== undefined && latestPain.pain_level !== null) patientComments.push(`Dor: ${latestPain.pain_level}`);
+              if (latestPain.pain_location) patientComments.push(`Local: ${latestPain.pain_location}`);
+              if (latestPain.notes) patientComments.push(`Obs: ${latestPain.notes}`);
+            }
+            const patientCommentsHtml = patientComments.length
+              ? `<ul style="margin:6px 0 0 0; padding-left:18px;">${patientComments.map(t => `<li>${t}</li>`).join('')}</ul>`
+              : `<div style="color:#6b7280; font-size:0.9rem; margin-top:6px;">Sem comentários do paciente.</div>`;
 
             const feedbacks = Array.isArray(ex.feedbacks) ? ex.feedbacks : [];
             const feedbackHtml = feedbacks.length
               ? `<ul style="margin:6px 0 0 0; padding-left:18px;">
                    ${feedbacks.slice(0, 3).map(f => `<li>${f.content}</li>`).join('')}
                  </ul>`
-              : `<div style="color:#6b7280; font-size:0.9rem; margin-top:6px;">Sem comentários.</div>`;
+              : `<div style="color:#6b7280; font-size:0.9rem; margin-top:6px;">Sem comentários do fisioterapeuta.</div>`;
 
 
             return `
@@ -129,8 +136,8 @@
                     <div><b>Conclusão:</b> ${completionRate}</div>
                   </div>
                 </div>
-                <div style="margin-top:10px; color:#374151; font-size:0.95rem;"><b>${painText}</b></div>
-                <div style="margin-top:10px; color:#374151; font-size:0.95rem;"><b>Feedback:</b>${feedbackHtml}</div>
+                <div style="margin-top:10px; color:#374151; font-size:0.95rem;"><b>Comentários do paciente:</b>${patientCommentsHtml}</div>
+                <div style="margin-top:10px; color:#374151; font-size:0.95rem;"><b>Comentários do fisioterapeuta:</b>${feedbackHtml}</div>
               </div>
             `;
           }).join('')

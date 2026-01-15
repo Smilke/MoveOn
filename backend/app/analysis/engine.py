@@ -1,11 +1,18 @@
 """Orchestrator: uses processor + rules to analyze a submitted video and produce feedback logs."""
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional, Callable
 from datetime import datetime
 from .processor import YOLOPoseWrapper
 from .rules import count_reps, segment_reps
 
 
-def analyze_video(patient_id: str, exercise_id: str, video_path: str, processor: YOLOPoseWrapper = None, min_reps: int = 2) -> Dict[str, Any]:
+def analyze_video(
+    patient_id: str,
+    exercise_id: str,
+    video_path: str,
+    processor: YOLOPoseWrapper = None,
+    min_reps: int = 2,
+    progress_cb: Optional[Callable[[int, int, int], None]] = None,
+) -> Dict[str, Any]:
     """Analyze video and return structured feedback.
 
     - processor.detect_joint_angles should return list of (timestamp, angle)
@@ -15,7 +22,7 @@ def analyze_video(patient_id: str, exercise_id: str, video_path: str, processor:
         processor = YOLOPoseWrapper()
 
     # attempt to get angle sequence (timestamp, angle_degrees)
-    seq: List[Tuple[float, float]] = processor.detect_joint_angles(video_path, joint="knee")
+    seq: List[Tuple[float, float]] = processor.detect_joint_angles(video_path, joint="knee", progress_cb=progress_cb)
 
     rep_segments = segment_reps(seq, down_threshold=90.0, up_threshold=160.0)
     reps = len(rep_segments)

@@ -5,6 +5,10 @@ This writes JSON lines into uploads/analysis_logs.jsonl for easy inspection.
 from pathlib import Path
 import json
 from typing import Dict, Any
+import threading
+
+
+_write_lock = threading.Lock()
 
 
 def save_feedback(feedback: Dict[str, Any]):
@@ -12,5 +16,6 @@ def save_feedback(feedback: Dict[str, Any]):
     upload_dir = base_dir / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
     out_file = upload_dir / "analysis_logs.jsonl"
-    with out_file.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(feedback, ensure_ascii=False) + "\n")
+    with _write_lock:
+        with out_file.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(feedback, ensure_ascii=False) + "\n")

@@ -24,7 +24,8 @@ def _load_video_feedbacks_for_patient(patient_id: int) -> List[Dict[str, Any]]:
         for ex in session.exec(select(ExerciseLibrary)).all():
             exercise_map[str(ex.id)] = ex.name
 
-    feedbacks: List[Dict[str, Any]] = []
+    latest_by_video: Dict[str, Dict[str, Any]] = {}
+    without_video: List[Dict[str, Any]] = []
     with logs_path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
@@ -43,25 +44,37 @@ def _load_video_feedbacks_for_patient(patient_id: int) -> List[Dict[str, Any]]:
 
                 video_filename = entry.get("video_filename") or entry.get("filename")
 
-                feedbacks.append(
-                    {
-                        "exercise_id": ex_id,
-                        "exercise_name": exercise_map.get(str(ex_id), "Exercício"),
-                        "timestamp": entry.get("Timestamp")
-                        or entry.get("date")
-                        or entry.get("created_at"),
-                        "status": entry.get("Status_Execucao", ""),
-                        "observacoes": entry.get("Observacoes_Tecnicas", []),
-                        "repeticoes": entry.get("Repetitions", None),
-                        "feedback": entry.get("feedback", entry.get("result", "")),
-                        "detalhes": detalhes,
-                        "video_filename": video_filename,
-                        "video_url": f"/api/videos/{video_filename}" if video_filename else None,
-                    }
-                )
+                progress = entry.get("progress")
+                if progress is None:
+                    progress = entry.get("Progress")
+                frames_done = entry.get("frames_done")
+                frames_total = entry.get("frames_total")
+                normalized = {
+                    "exercise_id": ex_id,
+                    "exercise_name": exercise_map.get(str(ex_id), "Exercício"),
+                    "timestamp": entry.get("Timestamp") or entry.get("date") or entry.get("created_at"),
+                    "status": entry.get("Status_Execucao", ""),
+                    "observacoes": entry.get("Observacoes_Tecnicas", []),
+                    "repeticoes": entry.get("Repetitions", None),
+                    "feedback": entry.get("feedback", entry.get("result", "")),
+                    "detalhes": detalhes,
+                    "video_filename": video_filename,
+                    "video_url": f"/api/videos/{video_filename}" if video_filename else None,
+                    "progress": progress,
+                    "frames_done": frames_done,
+                    "frames_total": frames_total,
+                }
+
+                # JSONL is append-only; last entry for a filename is the latest state
+                if video_filename:
+                    latest_by_video[str(video_filename)] = normalized
+                else:
+                    without_video.append(normalized)
             except Exception:
                 continue
 
+    feedbacks: List[Dict[str, Any]] = without_video + list(latest_by_video.values())
+    feedbacks.sort(key=lambda x: x.get("timestamp") or "", reverse=True)
     return feedbacks
 
 @router.get("/patients/{patient_id}/video-feedbacks", summary="Lista feedbacks de vídeos analisados do paciente")

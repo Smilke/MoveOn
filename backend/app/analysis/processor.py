@@ -3,7 +3,7 @@
 In production this would run inference on the video and return joint keypoints over time.
 For testing we will mock `YOLOPoseWrapper.detect_joint_angles` to return synthetic sequences.
 """
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Callable
 import datetime
 import os
 
@@ -23,7 +23,12 @@ class YOLOPoseWrapper:
             except Exception:
                 self._model = None
 
-    def detect_joint_angles(self, video_path: str, joint: str = "knee") -> List[Tuple[float, float]]:
+    def detect_joint_angles(
+        self,
+        video_path: str,
+        joint: str = "knee",
+        progress_cb: Optional[Callable[[int, int, int], None]] = None,
+    ) -> List[Tuple[float, float]]:
         """Detect joint angle sequence for `joint` from a video.
 
         Returns list of (timestamp_seconds, angle_degrees).
@@ -36,11 +41,16 @@ class YOLOPoseWrapper:
         import numpy as np
         from app.analysis.rules import compute_angle
 
+        import time
+
         cap = cv2.VideoCapture(video_path)
         fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
         frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         results = []
         frame_idx = 0
+
+        last_progress_pct = -1
+        last_progress_time = 0.0
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -89,5 +99,18 @@ class YOLOPoseWrapper:
                         timestamp = frame_idx / fps
                         results.append((timestamp, angle))
             frame_idx += 1
+
+            if progress_cb is not None and frame_count > 0:
+                pct = int((frame_idx / frame_count) * 100)
+                now = time.monotonic()
+                pct_jump = pct - last_progress_pct
+                if pct != last_progress_pct and (pct_jump >= 5 or (now - last_progress_time) >= 1.5):
+                    last_progress_pct = pct
+                    last_progress_time = now
+                    try:
+                        progress_cb(pct, frame_idx, frame_count)
+                    except Exception:
+                        # progress updates must never break analysis
+                        pass
         cap.release()
         return results

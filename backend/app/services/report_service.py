@@ -96,6 +96,7 @@ class ReportService:
             pain_levels_statement = (
                 select(PainLevel)
                 .where(PainLevel.execution_id == execution.id)
+                .order_by(PainLevel.reported_at.desc())
             )
             pain_levels_data = list(session.exec(pain_levels_statement).all())
             pain_levels = [

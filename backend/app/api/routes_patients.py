@@ -6,6 +6,11 @@ from datetime import datetime
 
 from app.core.database import get_session
 from app.models.patient import Patient
+from app.models.goal import Goal
+from app.models.prescription import Prescription
+from app.models.exercise_execution import ExerciseExecution
+from app.models.pain_level import PainLevel
+from app.models.feedback import Feedback
 
 router = APIRouter()
 
@@ -107,3 +112,67 @@ def get_patient(
             detail=f"Paciente {patient_id} não encontrado"
         )
     return patient
+
+
+@router.delete(
+    "/physiotherapists/{physio_id}/patients/{patient_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Remove um paciente (fisioterapeuta)",
+    description="Hard delete do paciente. Remove também prescrições, execuções (e dor/feedbacks) e metas vinculadas para não quebrar FKs.",
+)
+def delete_patient_for_physiotherapist(
+    physio_id: int,
+    patient_id: int,
+    session: Session = Depends(get_session),
+):
+    patient = session.get(Patient, patient_id)
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Paciente {patient_id} não encontrado",
+        )
+    if patient.physiotherapist_id != physio_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado: paciente não vinculado a este fisioterapeuta",
+        )
+
+    try:
+        # 1) Metas
+        goals = list(session.exec(select(Goal).where(Goal.patient_id == patient_id)).all())
+        for g in goals:
+            session.delete(g)
+
+        # 2) Execuções + dependentes (dor/feedbacks)
+        executions = list(
+            session.exec(select(ExerciseExecution).where(ExerciseExecution.patient_id == patient_id)).all()
+        )
+        for ex in executions:
+            pains = list(session.exec(select(PainLevel).where(PainLevel.execution_id == ex.id)).all())
+            for p in pains:
+                session.delete(p)
+
+            fbs = list(session.exec(select(Feedback).where(Feedback.execution_id == ex.id)).all())
+            for f in fbs:
+                session.delete(f)
+
+            session.delete(ex)
+
+        # 3) Prescrições (após remover execuções)
+        prescriptions = list(
+            session.exec(select(Prescription).where(Prescription.patient_id == patient_id)).all()
+        )
+        for pr in prescriptions:
+            session.delete(pr)
+
+        # 4) Paciente
+        session.delete(patient)
+        session.commit()
+        return {"message": "Paciente removido permanentemente"}
+    except Exception as e:  # noqa: BLE001
+        if session.in_transaction():
+            session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao remover paciente: {str(e)}",
+        )

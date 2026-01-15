@@ -14,6 +14,8 @@ from app.models.exercise_library import ExerciseLibrary
 from app.models.prescription import Prescription
 from app.models.patient import Patient
 from app.models.exercise_execution import ExerciseExecution
+from app.models.pain_level import PainLevel
+from app.models.feedback import Feedback
 from app.models.exercise_example_video import ExerciseExampleVideo
 
 router = APIRouter()
@@ -402,8 +404,8 @@ def reactivate_prescription_for_physio_patient(
 @router.delete(
     "/physiotherapists/{physio_id}/patients/{patient_id}/prescriptions/{prescription_id}/permanent",
     status_code=status.HTTP_200_OK,
-    summary="Remove permanentemente uma prescrição (somente se sem histórico)",
-    description="Hard delete. Só permite remover se não houver execuções vinculadas (para preservar histórico).",
+    summary="Remove permanentemente uma prescrição",
+    description="Hard delete. Remove a prescrição e também quaisquer execuções vinculadas (inclui dor/comentários e feedbacks do fisio) para evitar inconsistência.",
 )
 def permanently_delete_prescription_for_physio_patient(
     physio_id: int,
@@ -442,25 +444,18 @@ def permanently_delete_prescription_for_physio_patient(
             ).all()
         )
 
-        if executions:
-            placeholder = Prescription(
-                patient_id=prescription.patient_id,
-                physiotherapist_id=prescription.physiotherapist_id,
-                exercise_id=prescription.exercise_id,
-                repetitions=prescription.repetitions,
-                series=prescription.series,
-                duration_minutes=prescription.duration_minutes,
-                difficulty_level=prescription.difficulty_level,
-                weekly_frequency=prescription.weekly_frequency,
-                is_active=False,
-                notes=_DELETED_PLACEHOLDER_NOTES,
-            )
-            session.add(placeholder)
-            session.flush()
+        # Deletar histórico relacionado antes da prescrição para respeitar FK NOT NULL.
+        for ex in executions:
+            # Dependentes diretos de exercise_executions
+            pains = list(session.exec(select(PainLevel).where(PainLevel.execution_id == ex.id)).all())
+            for p in pains:
+                session.delete(p)
 
-            for ex in executions:
-                ex.prescription_id = placeholder.id
-                session.add(ex)
+            fbs = list(session.exec(select(Feedback).where(Feedback.execution_id == ex.id)).all())
+            for f in fbs:
+                session.delete(f)
+
+            session.delete(ex)
 
         session.delete(prescription)
         session.commit()

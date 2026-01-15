@@ -13,7 +13,6 @@ from app.schemas.execution_history import (
     PeriodFilter,
     ExecutionCreate
 )
-from app.models.feedback import Feedback
 
 
 class ExecutionHistoryService:
@@ -192,25 +191,22 @@ class ExecutionHistoryService:
         session.commit()
         session.refresh(execution)
 
-        # 4. Registrar Nível de Dor (se houver)
-        if data.pain_level is not None:
+        # 4. Registrar Nível de Dor / Comentário do paciente
+        # Observação: o comentário inserido pelo paciente ao "realizar exercício" NÃO é feedback do fisioterapeuta.
+        # Guardamos esse texto em PainLevel.notes para aparecer como "Comentário do paciente" nos relatórios.
+        if (data.pain_level is not None) or (data.feedback_comment is not None and str(data.feedback_comment).strip()):
+            pain_level_value = data.pain_level if data.pain_level is not None else 0
+            notes_value = data.feedback_comment.strip() if data.feedback_comment is not None else None
+            if notes_value == "":
+                notes_value = None
+
             pain = PainLevel(
                 execution_id=execution.id,
-                pain_level=data.pain_level,
-                reported_at=datetime.utcnow()
+                pain_level=pain_level_value,
+                notes=notes_value,
+                reported_at=datetime.utcnow(),
             )
             session.add(pain)
-
-        # 5. Registrar Feedback (se houver)
-        if data.feedback_comment:
-            fb = Feedback(
-                execution_id=execution.id,
-                patient_id=prescription.patient_id,
-                content=data.feedback_comment,
-                feedback_type="neutral", # default
-                is_positive=True
-            )
-            session.add(fb)
         
         session.commit()
         session.refresh(execution)

@@ -37,7 +37,7 @@
         </thead>
         <tbody id="lista-pacientes">
           <tr>
-            <td colspan="4" style="text-align:center">Carregando...</td>
+            <td colspan="5" style="text-align:center">Carregando...</td>
           </tr>
         </tbody>
       </table>
@@ -77,6 +77,10 @@
     var API_BASE = window.API_BASE;
     const fisio = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
 
+    const expandedPatients = new Set();
+    const pendingVideoPatients = new Set();
+    let videosRefreshTimer = null;
+
     if (!fisio || fisio.tipo !== "fisioterapeuta") {
       window.location.href = "/login";
     }
@@ -88,12 +92,12 @@
         const data = await resp.json();
 
         if (!resp.ok) {
-          tbody.innerHTML = `<tr><td colspan="4">Erro ao carregar pacientes</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar pacientes</td></tr>`;
           return;
         }
 
         if (data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Nenhum paciente cadastrado.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">Nenhum paciente cadastrado.</td></tr>`;
           return;
         }
 
@@ -106,10 +110,13 @@
                         <td style="font-family: monospace;">${p.cpf || '-'}</td>
                         <td>${p.email}</td>
                         <td style="text-align:right">
-                            <a href="/prescricao_exercicio?patient_id=${p.id}" class="btn btn-small">Prescrever</a>
-                            <a href="/fisio_metas?patient_id=${p.id}" class="btn btn-secondary btn-small">Metas</a>
-                            <a href="/relatorio_paciente?patient_id=${p.id}" class="btn btn-secondary btn-small">Relatório</a>
-                            <button class="btn btn-secondary btn-small" onclick="togglePrescricoes(${p.id})">Prescrições</button>
+                            <div class="btn-group">
+                              <a href="/prescricao_exercicio?patient_id=${p.id}" class="btn btn-small">Prescrever</a>
+                              <a href="/fisio_metas?patient_id=${p.id}" class="btn btn-secondary btn-small">Metas</a>
+                              <a href="/relatorio_paciente?patient_id=${p.id}" class="btn btn-secondary btn-small">Relatório</a>
+                              <button class="btn btn-secondary btn-small" onclick="togglePrescricoes(${p.id})">Prescrições</button>
+                              <button class="btn btn-secondary btn-small" onclick="removerPaciente(${p.id})">Remover</button>
+                            </div>
                         </td>
                     `;
           tbody.appendChild(tr);
@@ -118,7 +125,7 @@
           trPrescs.id = `prescs-row-${p.id}`;
           trPrescs.style.display = "none";
           trPrescs.innerHTML = `
-                        <td colspan="4">
+                        <td colspan="5">
                           <div id="prescs-${p.id}" class="hint">Carregando prescrições...</div>
                           <div style="margin-top:16px; border-top:1px solid #e5e7eb; padding-top:14px;">
                             <h3 style="font-size: 1rem; color: #4b5563; margin:0">Vídeos enviados e análise</h3>
@@ -132,7 +139,7 @@
 
       } catch (e) {
         console.error(e);
-        tbody.innerHTML = `<tr><td colspan="4">Erro de conexão</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5">Erro de conexão</td></tr>`;
       }
     }
 
@@ -152,10 +159,28 @@
       const isHidden = row.style.display === "none" || row.style.display === "";
       if (isHidden) {
         row.style.display = "";
+        expandedPatients.add(patientId);
         await carregarPrescricoes(patientId);
       } else {
         row.style.display = "none";
+        expandedPatients.delete(patientId);
+        pendingVideoPatients.delete(patientId);
+        updateVideosAutoRefresh();
       }
+    }
+
+    function updateVideosAutoRefresh() {
+      if (videosRefreshTimer) {
+        clearInterval(videosRefreshTimer);
+        videosRefreshTimer = null;
+      }
+      if (pendingVideoPatients.size === 0) return;
+      videosRefreshTimer = setInterval(() => {
+        if (document.visibilityState !== 'visible') return;
+        expandedPatients.forEach((pid) => {
+          if (pendingVideoPatients.has(pid)) carregarVideosPaciente(pid);
+        });
+      }, 10000);
     }
 
     async function carregarPrescricoes(patientId) {
@@ -243,10 +268,13 @@
         const data = await resp.json();
         if (!Array.isArray(data) || data.length === 0) {
           statusEl.textContent = 'Nenhum vídeo enviado ainda.';
+          pendingVideoPatients.delete(patientId);
+          updateVideosAutoRefresh();
           return;
         }
 
         statusEl.textContent = '';
+        let hasPendingProgress = false;
         data.forEach((fb) => {
           const card = document.createElement('div');
           card.className = 'card';
@@ -255,6 +283,36 @@
           card.style.marginBottom = '10px';
 
           const ts = fb.timestamp ? new Date(fb.timestamp).toLocaleString('pt-BR') : 'data desconhecida';
+
+          function renderProgress(fb) {
+            const status = (fb.status || '').toLowerCase();
+            const isPending = status.includes('pendente') || status.includes('process') || status.includes('running');
+            const raw = (fb && fb.progress !== undefined && fb.progress !== null) ? Number(fb.progress) : NaN;
+            if (!isPending || Number.isNaN(raw)) return '';
+            const pct = Math.max(0, Math.min(100, Math.round(raw)));
+            const frames = (fb.frames_done !== undefined && fb.frames_total)
+              ? ` (${escapeHtml(fb.frames_done)}/${escapeHtml(fb.frames_total)} frames)`
+              : '';
+            return `
+              <div style='margin:8px 0 10px 0;'>
+                <div style='display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#6b7280; margin-bottom:6px;'>
+                  <span>Progresso da análise</span>
+                  <span><b>${pct}%</b>${frames}</span>
+                </div>
+                <div style='height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden;'>
+                  <div style='height:100%; width:${pct}%; background:#2563eb;'></div>
+                </div>
+              </div>
+            `;
+          }
+
+          const progressHtml = renderProgress(fb);
+
+          const statusLower = (fb.status || '').toLowerCase();
+          const isPending = statusLower.includes('pendente') || statusLower.includes('process') || statusLower.includes('running');
+          const hasProgress = (fb.progress !== null && fb.progress !== undefined);
+          if (isPending && hasProgress) hasPendingProgress = true;
+
           const obs = Array.isArray(fb.observacoes) && fb.observacoes.length
             ? `<ul style='margin:6px 0 0 0; padding-left:18px; color:#374151; font-size:0.93em'>${fb.observacoes.map(o=>`<li>${escapeHtml(o)}</li>`).join('')}</ul>`
             : '';
@@ -280,6 +338,7 @@
           card.innerHTML = `
             <div style='font-size:0.95rem; color:#0369a1; margin-bottom:4px'><b>${escapeHtml(fb.exercise_name || `Exercício ID: ${fb.exercise_id || "?"}`)}</b> (${escapeHtml(ts)})</div>
             <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Status:</b> ${escapeHtml(fb.status || '-')}</div>
+            ${progressHtml}
             <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Repetições detectadas:</b> ${fb.repeticoes ?? '-'}</div>
             ${obs}
             ${detalhes}
@@ -288,9 +347,15 @@
 
           listEl.appendChild(card);
         });
+
+        if (hasPendingProgress) pendingVideoPatients.add(patientId);
+        else pendingVideoPatients.delete(patientId);
+        updateVideosAutoRefresh();
       } catch (e) {
         console.error(e);
         statusEl.textContent = 'Erro de conexão ao carregar vídeos.';
+        pendingVideoPatients.delete(patientId);
+        updateVideosAutoRefresh();
       }
     }
 
@@ -369,6 +434,34 @@
       }
     }
 
+    async function removerPaciente(patientId) {
+      const ok = confirm(`Remover permanentemente o paciente #${patientId}?\n\nIsso também remove prescrições, execuções e metas vinculadas.`);
+      if (!ok) return;
+
+      try {
+        const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}`, {
+          method: "DELETE",
+        });
+
+        let data = null;
+        try { data = await resp.json(); } catch (e) { /* ignore */ }
+
+        if (!resp.ok) {
+          const msg = data && (data.detail || data.message) ? (data.detail || data.message) : "Erro ao remover paciente";
+          alert(msg);
+          return;
+        }
+
+        expandedPatients.delete(patientId);
+        pendingVideoPatients.delete(patientId);
+        updateVideosAutoRefresh();
+        await carregarPacientes();
+      } catch (e) {
+        console.error(e);
+        alert("Erro de conexão ao remover paciente");
+      }
+    }
+
     function abrirModalNovoPaciente() {
       document.getElementById("modal-novo").style.display = "flex";
     }
@@ -419,6 +512,17 @@
       localStorage.removeItem("moveon_usuario_logado");
       window.location.href = "/login";
     }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        updateVideosAutoRefresh();
+      } else {
+        if (videosRefreshTimer) {
+          clearInterval(videosRefreshTimer);
+          videosRefreshTimer = null;
+        }
+      }
+    });
 
     document.addEventListener("DOMContentLoaded", carregarPacientes);
   </script>

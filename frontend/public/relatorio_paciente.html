@@ -66,12 +66,13 @@
                         <th>Exercício</th>
                         <th>Status</th>
                         <th>Dor</th>
+                        <th>Comentário do paciente</th>
                         <th>Comentário do fisioterapeuta</th>
                     </tr>
                 </thead>
                 <tbody id="lista-execucoes">
                     <tr>
-                        <td colspan="5" style="text-align:center">Selecione um período...</td>
+                        <td colspan="6" style="text-align:center">Selecione um período...</td>
                     </tr>
                 </tbody>
             </table>
@@ -84,8 +85,19 @@
         const urlParams = new URLSearchParams(window.location.search);
         const patientId = urlParams.get("patient_id");
         let chartInstance = null;
+        let videoRefreshTimer = null;
 
         const fisio = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
+
+        function escapeHtml(value) {
+            const str = (value === undefined || value === null) ? "" : String(value);
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         if (!patientId) {
             alert("Paciente não especificado");
@@ -112,14 +124,14 @@
             atualizarBotoesPeriodo(botaoAtivo);
 
             const tbody = document.getElementById("lista-execucoes");
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">Buscando dados...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center">Buscando dados...</td></tr>`;
 
             try {
                 const resp = await fetch(`${API_BASE}/patients/${patientId}/reports?period_filter=${periodoSelecionado}`);
                 const data = await resp.json();
 
                 if (!resp.ok) {
-                    tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar relatório</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar relatório</td></tr>`;
                     return;
                 }
 
@@ -133,7 +145,7 @@
                 renderizarGrafico(data.executions);
 
                 if (!data.has_data || data.executions.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #64748b">Nenhuma atividade registrada neste período.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 30px; color: #64748b">Nenhuma atividade registrada neste período.</td></tr>`;
                     return;
                 }
 
@@ -142,39 +154,54 @@
                     const date = new Date(exec.execution_date).toLocaleDateString('pt-BR');
                     const exerciseName = exec.exercise ? exec.exercise.name : "Exercício removido";
 
-                    // Dor (pegar a maior ou média, aqui pegando a primeira se houver)
-                    const dor = exec.pain_levels.length > 0 ? exec.pain_levels[0].pain_level : "-";
+                                        const painLevels = Array.isArray(exec.pain_levels) ? exec.pain_levels : [];
+                                        const latestPain = painLevels.length > 0 ? painLevels[0] : null;
+                                        const dor = latestPain && (latestPain.pain_level !== undefined && latestPain.pain_level !== null)
+                                            ? latestPain.pain_level
+                                            : "-";
+
+                                        const patientCommentParts = [];
+                                        if (latestPain) {
+                                            if (latestPain.pain_location) patientCommentParts.push(`Local: ${latestPain.pain_location}`);
+                                            if (latestPain.notes) patientCommentParts.push(`Obs: ${latestPain.notes}`);
+                                        }
+                                        const patientComment = patientCommentParts.length ? patientCommentParts.join(' • ') : "-";
 
                                         // Comentário do fisioterapeuta (mostrar o mais recente)
                                         const fbList = Array.isArray(exec.feedbacks) ? exec.feedbacks : [];
                                         const lastFb = fbList.length > 0 ? fbList[0] : null;
                                         const fbText = lastFb && lastFb.content ? lastFb.content : "-";
 
+                                        const exerciseNameEsc = escapeHtml(exerciseName);
+                                        const patientCommentEsc = escapeHtml(patientComment);
+                                        const fbTextEsc = escapeHtml(fbText);
+
                     tbody.innerHTML += `
                         <tr>
                             <td>${date}</td>
-                            <td>${exerciseName}</td>
+                            <td>${exerciseNameEsc}</td>
                             <td>${exec.was_completed ? '<span class="badge badge-green">Concluído</span>' : '<span class="badge badge-gray">Incompleto</span>'}</td>
                             <td>${dor}</td>
-                                                        <td style="font-size:0.85rem; color:#64748b; max-width: 260px;">
-                                                            <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${fbText}">${fbText}</div>
-                                                            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                                                                <select id="fb-type-${exec.id}" class="btn btn-secondary btn-small" style="padding:6px 10px;">
-                                                                    <option value="neutral">Neutro</option>
-                                                                    <option value="positive">Positivo</option>
-                                                                    <option value="negative">Negativo</option>
-                                                                </select>
-                                                                <button class="btn btn-small" onclick="toggleFeedbackForm(${exec.id})">Adicionar feedback</button>
-                                                            </div>
-                                                            <div id="fb-form-${exec.id}" style="display:none; margin-top:8px;">
-                                                                <textarea id="fb-text-${exec.id}" rows="3" style="width:100%; resize:vertical" placeholder="Escreva o feedback para o paciente..."></textarea>
-                                                                <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                                                                    <button class="btn btn-small" onclick="salvarFeedback(${exec.id})">Salvar</button>
-                                                                    <button class="btn btn-secondary btn-small" onclick="toggleFeedbackForm(${exec.id}, true)">Cancelar</button>
-                                                                </div>
-                                                                <div id="fb-msg-${exec.id}" style="margin-top:6px; font-size:0.85rem; color:#6b7280;"></div>
-                                                            </div>
-                                                        </td>
+                            <td style="font-size:0.85rem; color:#64748b; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${patientCommentEsc}">${patientCommentEsc}</td>
+                            <td style="font-size:0.85rem; color:#64748b; max-width: 260px;">
+                                <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${fbTextEsc}">${fbTextEsc}</div>
+                                <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                                    <select id="fb-type-${exec.id}" class="btn btn-secondary btn-small" style="padding:6px 10px;">
+                                        <option value="neutral">Neutro</option>
+                                        <option value="positive">Positivo</option>
+                                        <option value="negative">Negativo</option>
+                                    </select>
+                                    <button class="btn btn-small" onclick="toggleFeedbackForm(${exec.id})">Adicionar feedback</button>
+                                </div>
+                                <div id="fb-form-${exec.id}" style="display:none; margin-top:8px;">
+                                    <textarea id="fb-text-${exec.id}" rows="3" style="width:100%; resize:vertical" placeholder="Escreva o feedback para o paciente..."></textarea>
+                                    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                                        <button class="btn btn-small" onclick="salvarFeedback(${exec.id})">Salvar</button>
+                                        <button class="btn btn-secondary btn-small" onclick="toggleFeedbackForm(${exec.id}, true)">Cancelar</button>
+                                    </div>
+                                    <div id="fb-msg-${exec.id}" style="margin-top:6px; font-size:0.85rem; color:#6b7280;"></div>
+                                </div>
+                            </td>
                         </tr>
                     `;
                 });
@@ -184,7 +211,7 @@
 
             } catch (e) {
                 console.error(e);
-                tbody.innerHTML = `<tr><td colspan="5">Erro de conexão</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6">Erro de conexão</td></tr>`;
             }
         }
 
@@ -266,6 +293,47 @@
             statusEl.textContent = "Carregando vídeos...";
             listEl.innerHTML = "";
 
+            function isPendingWithProgress(fb) {
+                const status = (fb.status || "").toLowerCase();
+                const isPending = status.includes("pendente") || status.includes("process") || status.includes("running");
+                const hasProgress = (fb.progress !== null && fb.progress !== undefined);
+                return isPending && hasProgress;
+            }
+
+            function updateVideoAutoRefresh(shouldRun) {
+                if (videoRefreshTimer) {
+                    clearInterval(videoRefreshTimer);
+                    videoRefreshTimer = null;
+                }
+                if (!shouldRun) return;
+                videoRefreshTimer = setInterval(() => {
+                    if (document.visibilityState !== 'visible') return;
+                    carregarVideosFeedback();
+                }, 10000);
+            }
+
+                        function renderProgress(fb) {
+                                const status = (fb.status || "").toLowerCase();
+                                const isPending = status.includes("pendente") || status.includes("process") || status.includes("running");
+                                const raw = (fb && fb.progress !== undefined && fb.progress !== null) ? Number(fb.progress) : NaN;
+                                if (!isPending || Number.isNaN(raw)) return "";
+                                const pct = Math.max(0, Math.min(100, Math.round(raw)));
+                                const frames = (fb.frames_done !== undefined && fb.frames_total)
+                                        ? ` (${escapeHtml(fb.frames_done)}/${escapeHtml(fb.frames_total)} frames)`
+                                        : "";
+                                return `
+                                    <div style='margin:8px 0 10px 0;'>
+                                        <div style='display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; color:#6b7280; margin-bottom:6px;'>
+                                            <span>Progresso da análise</span>
+                                            <span><b>${pct}%</b>${frames}</span>
+                                        </div>
+                                        <div style='height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden;'>
+                                            <div style='height:100%; width:${pct}%; background:#2563eb;'></div>
+                                        </div>
+                                    </div>
+                                `;
+                        }
+
             try {
                 const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/video-feedbacks`);
                 if (!resp.ok) {
@@ -275,11 +343,14 @@
                 const data = await resp.json();
                 if (!Array.isArray(data) || data.length === 0) {
                     statusEl.textContent = "Nenhum vídeo enviado ainda.";
+                    updateVideoAutoRefresh(false);
                     return;
                 }
 
                 statusEl.textContent = "";
+                let hasPendingProgress = false;
                 data.forEach((fb) => {
+                    if (isPendingWithProgress(fb)) hasPendingProgress = true;
                     const card = document.createElement("div");
                     card.className = "card";
                     card.style.boxShadow = "none";
@@ -287,6 +358,7 @@
                     card.style.marginBottom = "10px";
 
                     const ts = fb.timestamp ? new Date(fb.timestamp).toLocaleString('pt-BR') : "data desconhecida";
+                    const progressHtml = renderProgress(fb);
                     const obs = Array.isArray(fb.observacoes) && fb.observacoes.length
                         ? `<ul style='margin:6px 0 0 0; padding-left:18px; color:#374151; font-size:0.93em'>${fb.observacoes.map(o=>`<li>${o}</li>`).join('')}</ul>`
                         : "";
@@ -312,6 +384,7 @@
                     card.innerHTML = `
                       <div style='font-size:0.95rem; color:#0369a1; margin-bottom:4px'><b>${fb.exercise_name || `Exercício ID: ${fb.exercise_id || "?"}`}</b> (${ts})</div>
                       <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Status:</b> ${fb.status || '-'}</div>
+                                            ${progressHtml}
                       <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Repetições detectadas:</b> ${fb.repeticoes ?? '-'}</div>
                       ${obs}
                       ${detalhes}
@@ -320,9 +393,12 @@
 
                     listEl.appendChild(card);
                 });
+
+                updateVideoAutoRefresh(hasPendingProgress);
             } catch (e) {
                 console.error(e);
                 statusEl.textContent = "Erro de conexão ao carregar vídeos.";
+                updateVideoAutoRefresh(false);
             }
         }
 
@@ -371,6 +447,12 @@
             // Ao voltar para a aba, puxa na hora (sem esperar 15s)
             if (document.visibilityState === 'visible') {
                 carregarRelatorio(null, null);
+                carregarVideosFeedback();
+            } else {
+                if (videoRefreshTimer) {
+                    clearInterval(videoRefreshTimer);
+                    videoRefreshTimer = null;
+                }
             }
         });
     </script>
