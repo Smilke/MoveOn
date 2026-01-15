@@ -17,12 +17,15 @@ from app.api.routes_feedback import router as feedback_router
 from app.api.routes_exercises import router as exercises_router
 from app.api.routes_execution_history import router as execution_history_router
 from app.api.routes_prescriptions import router as prescriptions_router
+from app.api.routes_patients import router as patients_router
+from app.api.routes_reports import router as reports_router
+from app.api.routes_progress_report import router as progress_reports_router
 from app.api.routes_patients_db import router as patients_db_router
 from app.api.routes_fisioterapeuta_db import router as fisioterapeuta_db_router
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
+    app = FastAPI(title=settings.PROJECT_NAME)
 
     origins = [
         "http://localhost:5173",
@@ -46,92 +49,33 @@ def create_app() -> FastAPI:
         return {"message": "API rodando", "project": settings.PROJECT_NAME}
 
     # health
-    app.include_router(
-        health_router,
-        prefix=api_prefix,
-        tags=["health"],
-    )
-
-    # fisioterapeutas
-    app.include_router(
-        fisioterapeuta_router,
-        prefix=api_prefix,
-        tags=["fisioterapeutas"],
-    )
-
-    # pacientes
-    app.include_router(
-        patients_db_router,
-        prefix=api_prefix,
-        tags=["pacientes"],
-    )
-
-    # notificações
-    app.include_router(
-        notificacoes_router,
-        prefix=api_prefix,
-        tags=["notificacoes"],
-    )
-
-    # metas
-    app.include_router(
-        metas_router,
-        prefix=api_prefix,
-        tags=["metas"],
-    )
+    app.include_router(health_router, prefix=api_prefix, tags=["health"])
 
     # login
-    app.include_router(
-        login_router,
-        prefix=api_prefix,
-        tags=["login"],
-    )
+    app.include_router(login_router, prefix=api_prefix, tags=["login"])
 
-    # recuperação de senha
-    app.include_router(
-        recuperacao_router,
-        prefix=api_prefix,
-        tags=["recuperacao_senha"],
-    )
-
-    # feedback
-    app.include_router(
-        feedback_router,
-        prefix=api_prefix,
-        tags=["feedbacks"],
-    )
-
-    # exercícios gamificados (PB08)
-    app.include_router(
-        exercises_router,
-        prefix=api_prefix,
-        tags=["exercises"],
-    )
-
-    app.include_router(
-        execution_history_router,
-        prefix=api_prefix,
-        tags=["execution_history"],  
-    )
-
-    app.include_router(
-        prescriptions_router,
-        prefix=api_prefix,
-        tags=["prescriptions"],
-    )
-
-    app.include_router(
-        patients_db_router,
-        prefix=api_prefix,
-        tags=["patients_db"],   
-    )
+    # pacientes
+    app.include_router(patients_router, prefix=api_prefix, tags=["patients"])
     
-    app.include_router(
-        fisioterapeuta_db_router,
-        prefix=api_prefix,
-        tags=["fisioterapeutas_db"],
-    )
-    
+    # exercícios e prescrições
+    app.include_router(exercises_router, prefix=api_prefix, tags=["exercises"])
+    app.include_router(prescriptions_router, prefix=api_prefix, tags=["prescriptions"])
+    app.include_router(execution_history_router, prefix=api_prefix, tags=["execution_history"])
+
+    # relatórios
+    app.include_router(reports_router, prefix=api_prefix, tags=["reports"])
+    app.include_router(progress_reports_router, prefix=api_prefix, tags=["progress-reports"])
+
+    # outros
+    app.include_router(fisioterapeuta_router, prefix=api_prefix, tags=["fisioterapeutas"])
+    app.include_router(notificacoes_router, prefix=api_prefix, tags=["notificacoes"])
+    app.include_router(metas_router, prefix=api_prefix, tags=["metas"])
+    app.include_router(recuperacao_router, prefix=api_prefix, tags=["recuperacao_senha"])
+    app.include_router(feedback_router, prefix=api_prefix, tags=["feedbacks"])
+
+    # Legacy/Other DB routers
+    app.include_router(patients_db_router, prefix=api_prefix, tags=["patients_db"])
+    app.include_router(fisioterapeuta_db_router, prefix=api_prefix, tags=["fisioterapeutas_db"])
     
     @app.on_event("startup")
     def on_startup() -> None:
@@ -139,6 +83,5 @@ def create_app() -> FastAPI:
         init_db()
 
     return app
-
 
 app = create_app()

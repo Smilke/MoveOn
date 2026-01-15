@@ -25,9 +25,7 @@ class ExerciseExecution(SQLModel, table=True):
     was_completed: bool = Field(default=False)
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    # updated_at removido para compatibilidade com esquema antigo/revertido se necessario, 
-    # mas ideal é ter. Como o erro foi falta de coluna, e user quer fix...
-    # Vou manter SEM updated_at para evitar o erro de coluna faltando se o DB não tiver migrado.
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relacionamentos
     prescription: "Prescription" = Relationship(back_populates="executions")
