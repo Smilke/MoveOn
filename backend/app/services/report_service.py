@@ -113,6 +113,7 @@ class ReportService:
             feedbacks_statement = (
                 select(Feedback)
                 .where(Feedback.execution_id == execution.id)
+                .order_by(Feedback.created_at.desc())
             )
             feedbacks_data = list(session.exec(feedbacks_statement).all())
             feedbacks = [
@@ -125,6 +126,7 @@ class ReportService:
                 )
                 for f in feedbacks_data
             ]
+
 
             execution_detail = ExerciseExecutionDetail(
                 id=execution.id,

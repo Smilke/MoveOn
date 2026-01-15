@@ -60,6 +60,8 @@ class ExerciseLibraryInfo(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     difficulty: str
+    example_video_filename: Optional[str] = None
+    example_video_url: Optional[str] = None
 
     class Config:
         from_attributes = True

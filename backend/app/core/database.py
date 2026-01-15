@@ -28,6 +28,7 @@ def create_db_and_tables():
     from app.models.patient import Patient
     from app.models.physiotherapist import Physiotherapist
     from app.models.exercise_library import ExerciseLibrary
+    from app.models.exercise_example_video import ExerciseExampleVideo
     from app.models.prescription import Prescription
     from app.models.exercise_execution import ExerciseExecution
     from app.models.feedback import Feedback

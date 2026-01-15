@@ -29,6 +29,8 @@ class ExerciseResponse(ExerciseBase):
     created_at: datetime
     updated_at: datetime
     is_active: bool
+    example_video_filename: Optional[str] = None
+    example_video_url: Optional[str] = None
 
     class Config:
         from_attributes = True

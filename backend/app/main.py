@@ -26,6 +26,8 @@ from app.api.routes_patients_db import router as patients_db_router
 from app.api.routes_fisioterapeuta_db import router as fisioterapeuta_db_router
 from app.api.routes_upload import router as upload_router
 from app.api.routes_videos import router as videos_router
+from app.api.routes_exercise_videos import router as exercise_videos_router
+from app.api.routes_execution_feedback import router as execution_feedback_router
 
 
 def create_app() -> FastAPI:
@@ -69,6 +71,9 @@ def create_app() -> FastAPI:
 
     # servir vídeos enviados
     app.include_router(videos_router, prefix=api_prefix, tags=["videos"])
+
+    # servir vídeos de exemplo de exercícios
+    app.include_router(exercise_videos_router, prefix=api_prefix, tags=["exercise-videos"])
     
     # exercícios e prescrições
     app.include_router(exercises_router, prefix=api_prefix, tags=["exercises"])
@@ -78,6 +83,10 @@ def create_app() -> FastAPI:
     # relatórios
     app.include_router(reports_router, prefix=api_prefix, tags=["reports"])
     app.include_router(progress_reports_router, prefix=api_prefix, tags=["progress-reports"])
+
+    # feedback do fisioterapeuta por execução
+    app.include_router(execution_feedback_router, prefix=api_prefix, tags=["execution-feedbacks"])
+
 
     # outros
     app.include_router(fisioterapeuta_router, prefix=api_prefix, tags=["fisioterapeutas"])

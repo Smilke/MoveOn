@@ -22,6 +22,24 @@ def list_patients(
     patients = session.exec(statement).all()
     return patients
 
+
+@router.get(
+    "/physiotherapists/{physio_id}/patients",
+    response_model=List[Patient],
+    summary="Lista pacientes de um fisioterapeuta",
+    description="Retorna apenas os pacientes vinculados (patients.physiotherapist_id) ao fisioterapeuta informado"
+)
+def list_patients_for_physiotherapist(
+    physio_id: int,
+    session: Session = Depends(get_session),
+):
+    statement = (
+        select(Patient)
+        .where(Patient.physiotherapist_id == physio_id)
+        .order_by(Patient.name)
+    )
+    return session.exec(statement).all()
+
 @router.post(
     "/patients",
     response_model=Patient,

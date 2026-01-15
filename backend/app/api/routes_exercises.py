@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from sqlmodel import Session, select
 from typing import List
+from pathlib import Path
+import uuid
 
 from app.core.database import get_session
 from app.services.exercise_service import ExerciseService
@@ -11,6 +13,7 @@ from app.schemas.exercise import (
     ExerciseUpdate
 )
 from app.models.exercise_library import ExerciseLibrary
+from app.models.exercise_example_video import ExerciseExampleVideo
 
 router = APIRouter()
 
@@ -26,8 +29,22 @@ def list_exercises(
 ):
     """Lista todos os exercícios da biblioteca"""
     exercises = ExerciseService.get_all_exercises(session, active_only=active_only)
-    # Converter cada ExerciseLibrary para ExerciseResponse
-    return [ExerciseResponse.model_validate(exercise) for exercise in exercises]
+
+    responses = [ExerciseResponse.model_validate(exercise) for exercise in exercises]
+
+    if responses:
+        ids = [ex.id for ex in responses]
+        vids = session.exec(
+            select(ExerciseExampleVideo).where(ExerciseExampleVideo.exercise_id.in_(ids))
+        ).all()
+        by_ex_id = {v.exercise_id: v for v in vids}
+        for ex in responses:
+            v = by_ex_id.get(ex.id)
+            if v:
+                ex.example_video_filename = v.filename
+                ex.example_video_url = f"/exercise-videos/{v.filename}"
+
+    return responses
 
 @router.post(
     "/exercises",
@@ -90,8 +107,14 @@ def get_exercise(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Exercício com ID {exercise_id} não encontrado"
         )
-    # Converter ExerciseLibrary para ExerciseResponse
-    return ExerciseResponse.model_validate(exercise)
+    response = ExerciseResponse.model_validate(exercise)
+    v = session.exec(
+        select(ExerciseExampleVideo).where(ExerciseExampleVideo.exercise_id == exercise_id)
+    ).first()
+    if v:
+        response.example_video_filename = v.filename
+        response.example_video_url = f"/exercise-videos/{v.filename}"
+    return response
 
 @router.put(
     "/exercises/{exercise_id}",
@@ -113,8 +136,14 @@ def update_exercise(
                 detail=f"Exercício com ID {exercise_id} não encontrado"
             )
         
-        # Converter ExerciseLibrary para ExerciseResponse
         exercise_response = ExerciseResponse.model_validate(exercise)
+
+        v = session.exec(
+            select(ExerciseExampleVideo).where(ExerciseExampleVideo.exercise_id == exercise_id)
+        ).first()
+        if v:
+            exercise_response.example_video_filename = v.filename
+            exercise_response.example_video_url = f"/exercise-videos/{v.filename}"
         
         return ExerciseSuccessResponse(
             message="Exercício atualizado com sucesso",
@@ -130,3 +159,77 @@ def update_exercise(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao atualizar exercício: {str(e)}"
         )
+
+
+@router.delete(
+    "/exercises/{exercise_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Remove (desativa) um exercício",
+    description="Soft delete: marca o exercício como inativo (is_active=false) para não aparecer mais para prescrição/execução."
+)
+def delete_exercise(
+    exercise_id: int,
+    session: Session = Depends(get_session)
+):
+    try:
+        ok = ExerciseService.delete_exercise(session, exercise_id)
+        if not ok:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Exercício com ID {exercise_id} não encontrado"
+            )
+        return {"message": "Exercício removido (desativado) com sucesso"}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post(
+    "/exercises/{exercise_id}/example-video",
+    status_code=status.HTTP_200_OK,
+    summary="Envia vídeo de exemplo do exercício",
+    description="Faz upload de um vídeo de exemplo para um exercício e registra a referência."
+)
+async def upload_exercise_example_video(
+    exercise_id: int,
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+):
+    exercise = session.get(ExerciseLibrary, exercise_id)
+    if not exercise:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Exercício com ID {exercise_id} não encontrado"
+        )
+
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix not in {".mp4", ".mov", ".webm", ".mkv", ".avi"}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Formato de vídeo inválido. Use mp4/mov/webm/mkv/avi."
+        )
+
+    uploads_dir = Path(__file__).resolve().parents[1] / "uploads" / "exercise_example_videos"
+    uploads_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"{uuid.uuid4().hex}{suffix}"
+    dest = uploads_dir / filename
+    content = await file.read()
+    dest.write_bytes(content)
+
+    existing = session.exec(
+        select(ExerciseExampleVideo).where(ExerciseExampleVideo.exercise_id == exercise_id)
+    ).first()
+    if existing:
+        existing.filename = filename
+        session.add(existing)
+    else:
+        session.add(ExerciseExampleVideo(exercise_id=exercise_id, filename=filename))
+
+    session.commit()
+
+    return {
+        "message": "Vídeo de exemplo enviado com sucesso",
+        "exercise_id": exercise_id,
+        "example_video_filename": filename,
+        "example_video_url": f"/exercise-videos/{filename}",
+    }
