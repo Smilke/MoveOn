@@ -5,6 +5,7 @@ For testing we will mock `YOLOPoseWrapper.detect_joint_angles` to return synthet
 """
 from typing import List, Tuple, Optional
 import datetime
+import os
 
 try:
     from ultralytics import YOLO  # type: ignore
@@ -45,7 +46,17 @@ class YOLOPoseWrapper:
             if not ret:
                 break
             # YOLO inference
-            yolo_results = self._model(frame)
+            device = os.getenv("MOVEON_YOLO_DEVICE")  # e.g. "0" for CUDA GPU, "cpu" for CPU
+            half_env = os.getenv("MOVEON_YOLO_HALF")  # "1" to enable half precision (GPU)
+            half = (half_env == "1")
+
+            kwargs = {"verbose": False}
+            if device:
+                kwargs["device"] = device
+            if half_env is not None:
+                kwargs["half"] = half
+
+            yolo_results = self._model(frame, **kwargs)
             keypoints = None
             if hasattr(yolo_results, 'keypoints') and yolo_results.keypoints is not None:
                 # Ultralytics >=8.0.0

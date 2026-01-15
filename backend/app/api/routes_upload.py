@@ -2,10 +2,11 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 from fastapi.responses import JSONResponse
 from pathlib import Path
 import uuid
+from datetime import datetime
 
 from app.analysis import engine
-from app.analysis import processor as processor_mod
 from app.analysis import storage
+from app.analysis import runtime
 
 router = APIRouter()
 
@@ -29,48 +30,29 @@ async def upload_video(
         with dest.open("wb") as f:
             f.write(content)
 
-        # attempt analysis
-        feedback = None
+        # 1) Log imediato como "Pendente" (assim UI pode mostrar aguardando)
+        pending = {
+            "ID_Paciente": patient_id,
+            "ID_Exercicio": exercise_id,
+            "Timestamp": datetime.utcnow().isoformat() + "Z",
+            "Status_Execucao": "Pendente",
+            "Observacoes_Tecnicas": ["Vídeo recebido; análise em processamento"],
+            "Repetitions": 0,
+            "feedback": "A análise do vídeo está em processamento.",
+            "video_filename": filename,
+        }
         try:
-            proc = processor_mod.YOLOPoseWrapper()
-            # engine.analyze_video may raise NotImplementedError if model not available
-            feedback = engine.analyze_video(patient_id, exercise_id, str(dest), processor=proc)
-        except NotImplementedError:
-            # fallback feedback when inference unavailable in this environment
-            feedback = {
-                "ID_Paciente": patient_id,
-                "ID_Exercicio": exercise_id,
-                "Timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z",
-                "Status_Execucao": "Pendente",
-                "Observacoes_Tecnicas": ["Inference unavailable in this environment; análise adiada"],
-                "Repetitions": 0,
-                "feedback": "O vídeo foi recebido, mas a análise automática não está disponível neste ambiente.",
-            }
-        except Exception as exc:
-            feedback = {
-                "ID_Paciente": patient_id,
-                "ID_Exercicio": exercise_id,
-                "Timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z",
-                "Status_Execucao": "Erro",
-                "Observacoes_Tecnicas": [f"Analysis error: {str(exc)}"],
-                "Repetitions": 0,
-                "feedback": f"Erro ao processar o vídeo: {str(exc)}",
-            }
-
-        # garantir que o log tenha referência ao arquivo enviado
-        try:
-            if isinstance(feedback, dict):
-                feedback.setdefault("video_filename", filename)
+            storage.save_feedback(pending)
         except Exception:
             pass
 
-        # persist feedback/log
+        # 2) Rodar análise em segundo plano (não bloqueia a resposta)
         try:
-            storage.save_feedback(feedback)
+            runtime.submit_analysis(patient_id, exercise_id, str(dest), filename)
         except Exception:
-            # non-fatal
+            # se falhar enfileirar, não derruba upload
             pass
 
-        return JSONResponse(status_code=201, content={"filename": filename, "saved_path": str(dest), "analysis": feedback})
+        return JSONResponse(status_code=201, content={"filename": filename, "saved_path": str(dest), "analysis": pending})
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
