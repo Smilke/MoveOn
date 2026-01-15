@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 # backend/app/main.py
 from fastapi import FastAPI
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
@@ -22,6 +24,7 @@ from app.api.routes_reports import router as reports_router
 from app.api.routes_progress_report import router as progress_reports_router
 from app.api.routes_patients_db import router as patients_db_router
 from app.api.routes_fisioterapeuta_db import router as fisioterapeuta_db_router
+from app.api.routes_upload import router as upload_router
 
 
 def create_app() -> FastAPI:
