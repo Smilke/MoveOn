@@ -42,7 +42,7 @@
     const usuario = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
 
     if (!usuario || usuario.tipo !== "paciente") {
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     document.getElementById("nome-paciente").textContent = usuario.nome;
@@ -80,7 +80,7 @@
                                     ${p.series} séries de ${p.repetitions} repetições
                                 </p>
                             </div>
-                            <a href="realizar_exercicio.html?prescription_id=${p.id}" class="btn btn-small">Começar ▶</a>
+                            <a href="/realizar_exercicio?prescription_id=${p.id}" class="btn btn-small">Começar ▶</a>
                         </div>
                         ${p.notes ? `<div style="margin-top:10px; font-size:0.85rem; color:#4b5563; background:#f9fafb; padding:8px; border-radius:8px">📝 ${p.notes}</div>` : ''}
                     `;
@@ -124,7 +124,7 @@
 
     function logout() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     document.addEventListener("DOMContentLoaded", () => {

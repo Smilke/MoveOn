@@ -144,7 +144,7 @@
 </head>
 <body>
   <div class="page">
-    <a href="paciente_area.html" class="top-link">← Voltar para área do paciente</a>
+    <a href="/paciente_area" class="top-link">← Voltar para área do paciente</a>
 
     <div class="card">
       <header>
@@ -217,7 +217,7 @@
 
     function sair() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     async function enviarFeedback() {
@@ -288,6 +288,17 @@
     document.addEventListener("DOMContentLoaded", () => {
       atualizarHeader();
     });
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

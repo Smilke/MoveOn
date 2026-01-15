@@ -12,7 +12,7 @@
     <div class="page">
         <div class="card">
             <div class="top">
-                <a class="back" href="fisio_area.html">← Voltar para pacientes</a>
+                <a class="back" href="/fisio_area">← Voltar para pacientes</a>
             </div>
 
             <h1>Relatório de Progresso</h1>
@@ -80,7 +80,7 @@
 
         if (!patientId) {
             alert("Paciente não especificado");
-            window.location.href = "fisio_area.html";
+            window.location.href = "/fisio_area";
         }
 
         async function carregarRelatorio(periodo) {
@@ -180,6 +180,17 @@
 
         // Carregar inicial
         document.addEventListener("DOMContentLoaded", () => carregarRelatorio('last_month'));
+    </script>
+    <script>
+        (function(){
+            document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+                const href = a.getAttribute('href');
+                if (!href.match(/^https?:\/\//)) {
+                    const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+                    a.setAttribute('href','/' + p);
+                }
+            });
+        })();
     </script>
 </body>
 

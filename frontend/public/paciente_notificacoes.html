@@ -141,7 +141,7 @@
   <div class="page">
     <header>
       <div>
-        <a href="paciente_area.html" class="top-link">← Voltar para a área do paciente</a>
+        <a href="/paciente_area" class="top-link">← Voltar para a área do paciente</a>
         <h1>Minhas notificações</h1>
         <p class="sub">
           Aqui você vê avisos sobre metas, exercícios e outras atualizações do seu tratamento.
@@ -203,11 +203,22 @@
 
     function sair() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     async function carregarNotificacoes() {
       const usuario = obterUsuarioLogado();
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
       const listaEl = document.getElementById("lista-notificacoes");
       const msgEl = document.getElementById("mensagem-notificacoes");
 

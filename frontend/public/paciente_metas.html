@@ -108,7 +108,7 @@
   <div class="page">
     <header>
       <div class="top-row">
-        <a href="paciente_area.html" class="top-link">← Voltar para a área do paciente</a>
+        <a href="/paciente_area" class="top-link">← Voltar para a área do paciente</a>
       </div>
       <h1>Minhas metas</h1>
       <p class="sub">Consulte as metas definidas pelo seu fisioterapeuta e veja as notificações relacionadas.</p>
@@ -293,6 +293,17 @@
         alert("Erro ao carregar notificações (veja o console).");
       }
     }
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

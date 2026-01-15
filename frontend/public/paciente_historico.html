@@ -151,9 +151,20 @@
 <body>
   <div class="page">
     <header>
-      <a href="paciente_area.html" class="top-link">← Voltar para área do paciente</a>
+      <a href="/paciente_area" class="top-link">← Voltar para área do paciente</a>
       <h1>Histórico de exercícios</h1>
       <p class="sub">
+    <script>
+      (function(){
+        document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+          const href = a.getAttribute('href');
+          if (!href.match(/^https?:\/\//)) {
+            const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+            a.setAttribute('href','/' + p);
+          }
+        });
+      })();
+    </script>
         Veja as execuções registradas dos exercícios prescritos para você, com período filtrado.
       </p>
       <div class="auth-info">
@@ -236,7 +247,7 @@
 
     function sair() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     function atualizarHabilitacaoDatas() {

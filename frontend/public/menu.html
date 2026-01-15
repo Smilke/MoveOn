@@ -91,7 +91,7 @@
             Acesse o espaço do fisioterapeuta para cadastrar pacientes, definir metas
             e acompanhar a evolução de cada caso.
         </p>
-        <a class="btn" href="login.html">Entrar como fisioterapeuta</a>
+        <a class="btn" href="/login">Entrar como fisioterapeuta</a>
     </div>
 
     <div class="card">
@@ -101,7 +101,7 @@
         fisioterapeuta.
       </p>
       <!-- Já podemos aproveitar a página que você usa para metas/notificações -->
-      <a class="btn" href="paciente_area.html">Entrar como Paciente</a>
+      <a class="btn" href="/login?next=/paciente_area">Entrar como Paciente</a>
     </div>
   </div>
 
@@ -109,4 +109,17 @@
     Protótipo de navegação – uso interno do time MoveOn.
   </footer>
 </body>
+<script>
+  (function(){
+    document.querySelectorAll('a').forEach(a=>{
+      try{
+        const txt = (a.textContent||'').trim().toLowerCase();
+        const href = a.getAttribute('href')||'';
+        if (txt.includes('paciente') || /paciente_area/.test(href) || href.endsWith('paciente_area.html')) {
+          a.setAttribute('href','/login?next=/paciente_area');
+        }
+      }catch(e){}
+    });
+  })();
+</script>
 </html>

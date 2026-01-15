@@ -191,7 +191,7 @@
   <div class="page">
     <header>
       <div class="left-header">
-        <a href="fisio_area.html" class="top-link">← Voltar para a área do fisioterapeuta</a>
+        <a href="/fisio_area" class="top-link">← Voltar para a área do fisioterapeuta</a>
         <h1>Exercícios gamificados</h1>
         <p class="sub">
           Cadastre novos exercícios gamificados e visualize a biblioteca disponível para prescrição.
@@ -298,7 +298,7 @@
 
     function sair() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     async function enviarExercicio(event) {
@@ -437,6 +437,17 @@
       atualizarHeader();
       carregarExercicios();
     });
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

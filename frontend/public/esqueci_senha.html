@@ -140,7 +140,7 @@
 </head>
 <body>
   <div class="card">
-    <a href="login.html" class="top-link">← Voltar para o login</a>
+    <a href="/login" class="top-link">← Voltar para o login</a>
     <h1>Recuperar senha</h1>
     <p class="sub">
       Gere um token de recuperação pelo e-mail cadastrado e defina uma nova senha de acesso.
@@ -307,6 +307,17 @@
         msgErro.style.display = "block";
       }
     }
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

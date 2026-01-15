@@ -179,7 +179,7 @@
   <div class="page">
     <header>
       <div>
-        <a href="fisio_area.html" class="top-link">← Voltar para a área do fisioterapeuta</a>
+        <a href="/fisio_area" class="top-link">← Voltar para a área do fisioterapeuta</a>
         <h1>Metas dos Pacientes</h1>
         <p class="sub">
           Defina novas metas e acompanhe a evolução de cada paciente.
@@ -279,7 +279,7 @@
 
     function sair() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     // -------- Criar meta (POST /api/metas) --------
@@ -404,6 +404,17 @@
     document.addEventListener("DOMContentLoaded", () => {
       atualizarHeader();
     });
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

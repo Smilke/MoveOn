@@ -16,7 +16,7 @@
           <p class="sub">Gerencie seus pacientes e prescreva exercícios</p>
         </div>
         <div class="row-actions" style="margin-top:0">
-          <a href="lista_exercicios.html" class="btn btn-secondary btn-small">📚 Biblioteca de Exercícios</a>
+          <a href="/lista_exercicios" class="btn btn-secondary btn-small">📚 Biblioteca de Exercícios</a>
           <button onclick="logout()" class="btn btn-secondary btn-small">Sair</button>
         </div>
       </div>
@@ -72,7 +72,7 @@
     const fisio = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
 
     if (!fisio || fisio.tipo !== "fisioterapeuta") {
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     async function carregarPacientes() {
@@ -99,8 +99,8 @@
                         <td>${p.name}</td>
                         <td>${p.email}</td>
                         <td style="text-align:right">
-                            <a href="prescricao_exercicio.html?patient_id=${p.id}" class="btn btn-small">Prescrever</a>
-                            <a href="relatorio_paciente.html?patient_id=${p.id}" class="btn btn-secondary btn-small">Relatório</a>
+                            <a href="/prescricao_exercicio?patient_id=${p.id}" class="btn btn-small">Prescrever</a>
+                            <a href="/relatorio_paciente?patient_id=${p.id}" class="btn btn-secondary btn-small">Relatório</a>
                         </td>
                     `;
           tbody.appendChild(tr);
@@ -126,10 +126,15 @@
       if (!name || !email) return alert("Preencha nome e email");
 
       try {
+        // Attach physiotherapist id when creating patient from fisioterapeuta UI
+        const fisio = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
+        const payload = { name, email };
+        if (fisio && fisio.tipo === 'fisioterapeuta' && fisio.id) payload.physiotherapist_id = fisio.id;
+
         const resp = await fetch(`${API_BASE}/patients`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, email })
+          body: JSON.stringify(payload)
         });
 
         if (resp.ok) {
@@ -137,20 +142,39 @@
           fecharModal();
           carregarPacientes();
         } else {
-          const err = await resp.json();
-          alert("Erro: " + (err.detail || "Desconhecido"));
+          // Try to surface server error details
+          let errText = "Desconhecido";
+          try {
+            const err = await resp.json();
+            errText = err.detail || JSON.stringify(err);
+          } catch(e) {
+            errText = await resp.text();
+          }
+          alert("Erro: " + errText);
         }
       } catch (e) {
+        console.error(e);
         alert("Erro de conexão");
       }
     }
 
     function logout() {
       localStorage.removeItem("moveon_usuario_logado");
-      window.location.href = "login.html";
+      window.location.href = "/login";
     }
 
     document.addEventListener("DOMContentLoaded", carregarPacientes);
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 

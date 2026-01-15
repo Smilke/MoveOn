@@ -11,7 +11,7 @@
   <div class="page">
     <div class="card">
       <div class="top">
-        <a class="back" href="fisio_area.html">← Voltar para a área do fisioterapeuta</a>
+        <a class="back" href="/fisio_area">← Voltar para a área do fisioterapeuta</a>
       </div>
 
       <h1>Prescrever exercício</h1>
@@ -188,6 +188,17 @@
       const patientId = getQueryParam("patient_id");
       carregarExercicios();
     });
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 

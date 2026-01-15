@@ -28,7 +28,7 @@
 <body>
   <div class="page">
     <div class="card">
-      <a href="fisio_area.html" class="top-link">← Voltar para a área do fisioterapeuta</a>
+      <a href="/fisio_area" class="top-link">← Voltar para a área do fisioterapeuta</a>
 
       <h1>Cadastrar paciente (Banco de Dados)</h1>
       <p class="sub">
@@ -146,6 +146,17 @@
         showErr("Erro inesperado ao cadastrar paciente.");
       }
     }
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 </html>

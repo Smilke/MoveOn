@@ -33,7 +33,7 @@
     <div class="page">
         <div class="card">
             <div class="top">
-                <a class="back" href="paciente_area.html">← Voltar</a>
+                <a class="back" href="/paciente_area">← Voltar</a>
             </div>
 
             <div id="content-loading" style="text-align:center; padding:30px">
@@ -108,7 +108,7 @@
 
         if (!prescriptionId) {
             alert("Erro: ID da prescrição não fornecido");
-            window.location.href = "paciente_area.html";
+            window.location.href = "/paciente_area";
         }
 
         function updatePainLabel(val) {
@@ -169,9 +169,9 @@
                     body: JSON.stringify(payload)
                 });
 
-                if (resp.ok) {
+                    if (resp.ok) {
                     alert("Parabéns! Exercício registrado com sucesso. 🎉");
-                    window.location.href = "paciente_area.html";
+                    window.location.href = "/paciente_area";
                 } else {
                     const err = await resp.json();
                     alert("Erro ao salvar: " + (err.detail || JSON.stringify(err)));
@@ -187,6 +187,17 @@
         }
 
         document.addEventListener("DOMContentLoaded", carregarDetalhes);
+    </script>
+    <script>
+        (function(){
+            document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+                const href = a.getAttribute('href');
+                if (!href.match(/^https?:\/\//)) {
+                    const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+                    a.setAttribute('href','/' + p);
+                }
+            });
+        })();
     </script>
 </body>
 

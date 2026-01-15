@@ -5,6 +5,25 @@
   <meta charset="UTF-8">
   <title>Login - MoveOn</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .forgot-link{
+      font-size:0.9rem;
+      color:#2563eb;
+      text-decoration:none;
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid transparent;
+      transition: background .15s, border-color .15s, color .15s, transform .05s;
+      display:inline-block;
+    }
+    .forgot-link:hover{
+      background:#eef2ff;
+      border-color:#c7ddff;
+      color:#1e40af;
+      transform:translateY(-1px);
+    }
+    .forgot-link:active{ transform:translateY(0); }
+  </style>
 </head>
 
 <body>
@@ -23,7 +42,10 @@
           <input type="password" id="senha" value="Senha124">
         </div>
         <div class="full">
-          <button class="btn" onclick="fazerLogin()" style="width: 100%">Entrar</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <a class="forgot-link" href="/esqueci_senha">Esqueci minha senha</a>
+            <button class="btn" onclick="fazerLogin()" style="width: 56%">Entrar</button>
+          </div>
           <div id="msg" class="msg"></div>
         </div>
       </div>
@@ -47,6 +69,7 @@
         return;
       }
 
+      const nextParam = new URLSearchParams(window.location.search).get('next');
       try {
         const resp = await fetch(`${API_BASE}/login`, {
           method: "POST",
@@ -64,10 +87,25 @@
         // Salvar usuário e redirecionar
         localStorage.setItem("moveon_usuario_logado", JSON.stringify(data));
 
+        // If a next param was provided, only respect it when the logged-in user's type
+        // matches the expected role for that destination. Otherwise fall back to the
+        // user's default area to avoid immediate redirect loops.
+        if (nextParam) {
+          const dest = nextParam.startsWith('/') ? nextParam : '/' + nextParam;
+          let expectedRole = null;
+          if (dest.startsWith('/paciente')) expectedRole = 'paciente';
+          if (dest.startsWith('/fisio') || dest.startsWith('/fisio_area')) expectedRole = 'fisioterapeuta';
+          if (!expectedRole || expectedRole === data.tipo) {
+            window.location.href = dest;
+            return;
+          }
+          // otherwise ignore next and fallthrough to user's area
+        }
+
         if (data.tipo === "fisioterapeuta") {
-          window.location.href = "fisio_area.html";
+          window.location.href = "/fisio_area";
         } else if (data.tipo === "paciente") {
-          window.location.href = "paciente_area.html";
+          window.location.href = "/paciente_area";
         } else {
           setMsg("Tipo de usuário desconhecido", "err");
         }
@@ -83,6 +121,17 @@
       el.className = "msg " + (type || "");
       el.textContent = text || "";
     }
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
   </script>
 </body>
 
