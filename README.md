@@ -45,6 +45,36 @@ Projeto base com:
     - Swagger UI:
         http://127.0.0.1:8000/docs
 
+### 🧪 Testes
+
+Backend (pytest):
+
+1. Dentro de `backend` crie e ative o virtualenv e instale dependências:
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+2. Rodar os testes:
+
+```bash
+pytest
+```
+
+Frontend (Vitest):
+
+1. Instalar dependências e rodar testes:
+
+```bash
+cd frontend
+npm install
+npm test
+```
+
+
 ### 🎨 Frontend – React + Vite + TypeScript
 1. Entrar na pasta do frontend
 

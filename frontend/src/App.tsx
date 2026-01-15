@@ -1,6 +1,7 @@
 // src/App.tsx
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "./api/client";
+import Upload from "./components/Upload";
 
 type Item = {
   name: string;
@@ -100,6 +101,8 @@ function App() {
         </form>
         {sumResult && <p>{sumResult}</p>}
       </section>
+
+      <Upload />
 
       {/* ITENS */}
       <section>
