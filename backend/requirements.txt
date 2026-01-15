@@ -10,4 +10,5 @@ ultralytics
 httpx
 python-multipart
 passlib
+bcrypt
 opencv-python

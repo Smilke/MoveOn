@@ -2,6 +2,8 @@ from typing import Optional, List
 
 from sqlmodel import Session, select
 
+from app.core.config import settings
+from app.core.security import hash_password
 from app.models.physiotherapist import Physiotherapist
 from app.schemas.physiotherapist import PhysiotherapistCreate
 
@@ -32,6 +34,8 @@ class PhysiotherapistService:
             cpf=data.cpf,
             email=data.email,
             license_number=data.license_number,
+            password_hash=hash_password(settings.DEFAULT_PHYSIO_PASSWORD),
+            must_change_password=False,
         )
 
         session.add(physio)

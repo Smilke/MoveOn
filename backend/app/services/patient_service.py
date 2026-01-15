@@ -2,6 +2,8 @@ from typing import List, Optional
 
 from sqlmodel import Session, select
 
+from app.core.config import settings
+from app.core.security import hash_password
 from app.models.patient import Patient
 from app.schemas.patient import PatientCreate
 
@@ -25,6 +27,8 @@ class PatientService:
             phone=data.phone,
             birth_date=data.birth_date,
             physiotherapist_id=data.physiotherapist_id,
+            password_hash=hash_password(settings.DEFAULT_PATIENT_PASSWORD),
+            must_change_password=True,
         )
 
         session.add(patient)

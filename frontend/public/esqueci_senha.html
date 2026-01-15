@@ -251,10 +251,10 @@
         msgOk.style.display = "block";
 
         if (data.token) {
-          tokenBox.textContent = "Token: " + data.token;
+          tokenBox.textContent = "Token (dev): " + data.token;
           tokenBox.style.display = "block";
 
-          // já preenche o campo de token da seção de redefinição
+          // preenche o campo de token da seção de redefinição
           const campoTokenRedefinir = document.getElementById("token-redefinir");
           campoTokenRedefinir.value = data.token;
         }

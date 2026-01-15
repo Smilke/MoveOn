@@ -88,6 +88,12 @@
         // Salvar usuário e redirecionar
         localStorage.setItem("moveon_usuario_logado", JSON.stringify(data));
 
+        if (data.must_change_password) {
+          const dest = nextParam ? (nextParam.startsWith('/') ? nextParam : '/' + nextParam) : '';
+          window.location.href = dest ? (`/trocar_senha?next=${encodeURIComponent(dest)}`) : '/trocar_senha';
+          return;
+        }
+
         // If a next param was provided, only respect it when the logged-in user's type
         // matches the expected role for that destination. Otherwise fall back to the
         // user's default area to avoid immediate redirect loops.

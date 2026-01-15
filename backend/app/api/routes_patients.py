@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import datetime
 
 from app.core.database import get_session
+from app.core.config import settings
+from app.core.security import hash_password
 from app.models.patient import Patient
 from app.models.goal import Goal
 from app.models.prescription import Prescription
@@ -20,9 +22,17 @@ class PatientCreate(BaseModel):
     cpf: str
     physiotherapist_id: Optional[int] = None
 
+
+class PatientOut(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    cpf: str
+    physiotherapist_id: Optional[int] = None
+
 @router.get(
     "/patients",
-    response_model=List[Patient],
+    response_model=List[PatientOut],
     summary="Lista todos os pacientes",
     description="Retorna a lista de todos os pacientes cadastrados"
 )
@@ -32,12 +42,21 @@ def list_patients(
     """Lista todos os pacientes"""
     statement = select(Patient).order_by(Patient.name)
     patients = session.exec(statement).all()
-    return patients
+    return [
+        PatientOut(
+            id=p.id,
+            name=p.name,
+            email=p.email,
+            cpf=p.cpf,
+            physiotherapist_id=p.physiotherapist_id,
+        )
+        for p in patients
+    ]
 
 
 @router.get(
     "/physiotherapists/{physio_id}/patients",
-    response_model=List[Patient],
+    response_model=List[PatientOut],
     summary="Lista pacientes de um fisioterapeuta",
     description="Retorna apenas os pacientes vinculados (patients.physiotherapist_id) ao fisioterapeuta informado"
 )
@@ -50,11 +69,21 @@ def list_patients_for_physiotherapist(
         .where(Patient.physiotherapist_id == physio_id)
         .order_by(Patient.name)
     )
-    return session.exec(statement).all()
+    patients = session.exec(statement).all()
+    return [
+        PatientOut(
+            id=p.id,
+            name=p.name,
+            email=p.email,
+            cpf=p.cpf,
+            physiotherapist_id=p.physiotherapist_id,
+        )
+        for p in patients
+    ]
 
 @router.post(
     "/patients",
-    response_model=Patient,
+    response_model=PatientOut,
     status_code=status.HTTP_201_CREATED,
     summary="Cadastra um novo paciente",
     description="Cria um novo paciente no sistema"
@@ -86,17 +115,25 @@ def create_patient(
         name=body.name,
         email=body.email,
         cpf=body.cpf,
-        physiotherapist_id=body.physiotherapist_id
+        physiotherapist_id=body.physiotherapist_id,
+        password_hash=hash_password(settings.DEFAULT_PATIENT_PASSWORD),
+        must_change_password=True,
     )
     
     session.add(nuevo_paciente)
     session.commit()
     session.refresh(nuevo_paciente)
-    return nuevo_paciente
+    return PatientOut(
+        id=nuevo_paciente.id,
+        name=nuevo_paciente.name,
+        email=nuevo_paciente.email,
+        cpf=nuevo_paciente.cpf,
+        physiotherapist_id=nuevo_paciente.physiotherapist_id,
+    )
 
 @router.get(
     "/patients/{patient_id}",
-    response_model=Patient,
+    response_model=PatientOut,
     summary="Obtém detalhes de um paciente",
     description="Retorna os dados cadastrais de um paciente específico"
 )
@@ -111,7 +148,13 @@ def get_patient(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Paciente {patient_id} não encontrado"
         )
-    return patient
+    return PatientOut(
+        id=patient.id,
+        name=patient.name,
+        email=patient.email,
+        cpf=patient.cpf,
+        physiotherapist_id=patient.physiotherapist_id,
+    )
 
 
 @router.delete(
