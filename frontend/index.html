@@ -7,20 +7,20 @@
     // Client-side route loader: allow URLs like /login to serve /login.html
     (function () {
       try {
-        const p = location.pathname;
+        var p = location.pathname;
         if (p && p !== '/' && !p.endsWith('.html')) {
-          const target = (p.endsWith('/') ? p.slice(0, -1) : p) + '.html';
+          var target = (p.endsWith('/') ? p.slice(0, -1) : p) + '.html';
           fetch(target, { cache: 'no-store' })
-            .then((res) => {
+            .then(function (res) {
               if (!res.ok) throw new Error('not found');
               return res.text();
             })
-            .then((html) => {
+            .then(function (html) {
               document.open();
               document.write(html);
               document.close();
             })
-            .catch(() => {
+            .catch(function () {
               // If specific HTML not found, leave current index (menu) as-is.
             });
         }
@@ -180,7 +180,8 @@
   .fisio-msg.err{color:#b91c1c}
 </style>
 <script>
-  const API_BASE = "http://127.0.0.1:8000/api";
+  window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+  var API_BASE = window.API_BASE;
   async function registerFisio(){
     const name = document.getElementById('fisio_name').value.trim();
     const email = document.getElementById('fisio_email').value.trim();

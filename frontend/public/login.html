@@ -44,7 +44,7 @@
         <div class="full">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
             <a class="forgot-link" href="/esqueci_senha">Esqueci minha senha</a>
-            <button class="btn" onclick="fazerLogin()" style="width: 56%">Entrar</button>
+            <button id="loginBtn" class="btn" style="width: 56%">Entrar</button>
           </div>
           <div id="msg" class="msg"></div>
         </div>
@@ -57,7 +57,8 @@
   </div>
 
   <script>
-    const API_BASE = "http://127.0.0.1:8000/api";
+    window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+    var API_BASE = window.API_BASE;
 
     async function fazerLogin() {
       setMsg("", "");
@@ -121,6 +122,11 @@
       el.className = "msg " + (type || "");
       el.textContent = text || "";
     }
+    // attach button handler (safer than inline onclick when HTML is injected)
+    try{
+      const btn = document.getElementById('loginBtn');
+      if(btn) btn.addEventListener('click', fazerLogin);
+    }catch(e){}
   </script>
   <script>
     (function(){

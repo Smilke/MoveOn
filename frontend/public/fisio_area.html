@@ -68,7 +68,8 @@
   </div>
 
   <script>
-    const API_BASE = "http://127.0.0.1:8000/api";
+    window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+    var API_BASE = window.API_BASE;
     const fisio = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
 
     if (!fisio || fisio.tipo !== "fisioterapeuta") {
