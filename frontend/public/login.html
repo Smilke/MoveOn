@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Login - MoveOn</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .forgot-link{
+      font-size:0.9rem;
+      color:#2563eb;
+      text-decoration:none;
+      padding:6px 10px;
+      border-radius:8px;
+      border:1px solid transparent;
+      transition: background .15s, border-color .15s, color .15s, transform .05s;
+      display:inline-block;
+    }
+    .forgot-link:hover{
+      background:#eef2ff;
+      border-color:#c7ddff;
+      color:#1e40af;
+      transform:translateY(-1px);
+    }
+    .forgot-link:active{ transform:translateY(0); }
+  </style>
+</head>
+
+<body>
+  <div class="page" style="max-width: 400px; margin-top: 100px;">
+    <div class="card">
+      <h1>MoveOn Login</h1>
+      <p class="sub">Faça login para acessar o sistema</p>
+
+      <div class="grid" style="margin-top: 24px;">
+        <div class="full">
+          <label>Email</label>
+          <input type="email" id="email" placeholder="admin@moveon.com" value="admin@moveon.com">
+        </div>
+        <div class="full">
+          <label>Senha</label>
+          <input type="password" id="senha" value="Senha124">
+        </div>
+        <div class="full">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <a class="forgot-link" href="/esqueci_senha">Esqueci minha senha</a>
+            <button class="btn" onclick="fazerLogin()" style="width: 56%">Entrar</button>
+          </div>
+          <div id="msg" class="msg"></div>
+        </div>
+      </div>
+
+      <p class="sub" style="margin-top:20px; text-align:center; font-size: 0.8rem;">
+        Senha padrão do sistema: <b>Senha124</b>
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    async function fazerLogin() {
+      setMsg("", "");
+      const email = document.getElementById("email").value;
+      const senha = document.getElementById("senha").value;
+
+      if (!email || !senha) {
+        setMsg("Preencha todos os campos", "err");
+        return;
+      }
+
+      const nextParam = new URLSearchParams(window.location.search).get('next');
+      try {
+        const resp = await fetch(`${API_BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, senha })
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          setMsg(data.detail || "Erro ao fazer login", "err");
+          return;
+        }
+
+        // Salvar usuário e redirecionar
+        localStorage.setItem("moveon_usuario_logado", JSON.stringify(data));
+
+        // If a next param was provided, only respect it when the logged-in user's type
+        // matches the expected role for that destination. Otherwise fall back to the
+        // user's default area to avoid immediate redirect loops.
+        if (nextParam) {
+          const dest = nextParam.startsWith('/') ? nextParam : '/' + nextParam;
+          let expectedRole = null;
+          if (dest.startsWith('/paciente')) expectedRole = 'paciente';
+          if (dest.startsWith('/fisio') || dest.startsWith('/fisio_area')) expectedRole = 'fisioterapeuta';
+          if (!expectedRole || expectedRole === data.tipo) {
+            window.location.href = dest;
+            return;
+          }
+          // otherwise ignore next and fallthrough to user's area
+        }
+
+        if (data.tipo === "fisioterapeuta") {
+          window.location.href = "/fisio_area";
+        } else if (data.tipo === "paciente") {
+          window.location.href = "/paciente_area";
+        } else {
+          setMsg("Tipo de usuário desconhecido", "err");
+        }
+
+      } catch (e) {
+        console.error(e);
+        setMsg("Erro de conexão com o servidor.", "err");
+      }
+    }
+
+    function setMsg(text, type) {
+      const el = document.getElementById("msg");
+      el.className = "msg " + (type || "");
+      el.textContent = text || "";
+    }
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
+</body>
+
+</html>

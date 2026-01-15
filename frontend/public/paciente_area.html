@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Minha Área - MoveOn</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="top">
+        <div>
+          <h1>Olá, <span id="nome-paciente">Paciente</span> 👋</h1>
+          <p class="sub">Bem-vindo ao seu painel de reabilitação</p>
+        </div>
+        <div class="row-actions" style="margin-top:0">
+          <button onclick="logout()" class="btn btn-secondary btn-small">Sair</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px;">
+        <h2 style="font-size: 1.2rem; margin-bottom: 15px;">Meus Exercícios Ativos</h2>
+        <div id="lista-exercicios" class="grid">
+          <div style="text-align:center; padding: 20px; color: #6b7280;" class="full">Carregando seus exercícios...
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+        <h3 style="font-size: 1rem; color: #4b5563;">Histórico Recente</h3>
+        <div id="historico-recente" style="margin-top: 10px;">
+          <p style="font-size: 0.9rem; color: #9ca3af;">Nenhuma atividade recente encontrada.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+    const usuario = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
+
+    if (!usuario || usuario.tipo !== "paciente") {
+      window.location.href = "/login";
+    }
+
+    document.getElementById("nome-paciente").textContent = usuario.nome;
+
+    async function carregarExercicios() {
+      const container = document.getElementById("lista-exercicios");
+      try {
+        const resp = await fetch(`${API_BASE}/patients/${usuario.id}/prescriptions?active_only=true`);
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          container.innerHTML = `<div class="full msg err">Erro ao carregar exercícios</div>`;
+          return;
+        }
+
+        if (data.length === 0) {
+          container.innerHTML = `<div class="full hint">Você não tem exercícios prescritos no momento.</div>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        data.forEach(p => {
+          // Calcular se já fez hoje? (Futuro)
+
+          const el = document.createElement("div");
+          el.className = "card";
+          el.style.boxShadow = "none";
+          el.style.border = "1px solid #e5e7eb";
+          el.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:start">
+                            <div>
+                                <span class="badge badge-blue" style="margin-bottom:6px; display:inline-block">${p.exercise.category || "Geral"}</span>
+                                <h3 style="margin:5px 0; font-size:1.1rem">${p.exercise.name}</h3>
+                                <p style="font-size:0.9rem; color:#6b7280; margin:0">
+                                    ${p.series} séries de ${p.repetitions} repetições
+                                </p>
+                            </div>
+                            <a href="/realizar_exercicio?prescription_id=${p.id}" class="btn btn-small">Começar ▶</a>
+                        </div>
+                        ${p.notes ? `<div style="margin-top:10px; font-size:0.85rem; color:#4b5563; background:#f9fafb; padding:8px; border-radius:8px">📝 ${p.notes}</div>` : ''}
+                    `;
+          container.appendChild(el);
+        });
+
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class="full msg err">Erro de conexão</div>`;
+      }
+    }
+
+    async function carregarHistorico() {
+      const container = document.getElementById("historico-recente");
+      try {
+        const resp = await fetch(`${API_BASE}/patients/${usuario.id}/exercise-history?period_filter=last_7_days`);
+        const data = await resp.json();
+
+        if (resp.ok && data.has_data) {
+          container.innerHTML = "";
+          // Pegar os 3 últimos
+          data.executions.slice(0, 3).forEach(exec => {
+            const date = new Date(exec.execution_date).toLocaleDateString('pt-BR');
+            const div = document.createElement("div");
+            div.style.padding = "8px 0";
+            div.style.borderBottom = "1px solid #f3f4f6";
+            div.style.fontSize = "0.9rem";
+            div.style.display = "flex";
+            div.style.justifyContent = "space-between";
+            div.innerHTML = `
+                            <span>Running <b>${exec.exercise.name}</b></span>
+                            <span style="color:#6b7280">${date}</span>
+                        `;
+            container.appendChild(div);
+          });
+        }
+      } catch (e) {
+        console.error("Erro ao carregar histórico", e);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("moveon_usuario_logado");
+      window.location.href = "/login";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarExercicios();
+      carregarHistorico();
+    });
+  </script>
+</body>
+
+</html>

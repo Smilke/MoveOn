@@ -11,5 +11,6 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
     )
 
+    DATABASE_URL: str = "sqlite:///./moveon_v3.db"
 
 settings = Settings()

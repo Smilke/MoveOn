@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Prescrever Exercício - MoveOn</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="top">
+        <a class="back" href="/fisio_area">← Voltar para a área do fisioterapeuta</a>
+      </div>
+
+      <h1>Prescrever exercício</h1>
+      <p class="sub">Selecione um exercício e defina os parâmetros para o paciente.</p>
+
+      <div class="hint">
+        <input type="text" id="patient-id-input" placeholder="ID do paciente">
+      </div>
+
+      <div class="grid">
+        <div class="full">
+          <label for="exerciseSelect">Exercício</label>
+          <select id="exerciseSelect"></select>
+        </div>
+
+        <div>
+          <label for="repetitions">Repetições</label>
+          <input id="repetitions" type="number" min="1" value="10" />
+        </div>
+
+        <div>
+          <label for="series">Séries</label>
+          <input id="series" type="number" min="1" value="3" />
+        </div>
+
+        <div>
+          <label for="duration">Duração (minutos) (opcional)</label>
+          <input id="duration" type="number" min="1" placeholder="Ex.: 15" />
+        </div>
+
+        <div>
+          <label for="weekly">Frequência semanal</label>
+          <input id="weekly" type="number" min="1" value="3" />
+        </div>
+
+        <div class="full">
+          <label for="notes">Observações (opcional)</label>
+          <input id="notes" type="text" placeholder="Ex.: manter postura / sem dor" />
+        </div>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn" onclick="prescrever()">Prescrever</button>
+        <button class="btn btn-secondary" onclick="carregarExercicios()">Recarregar exercícios</button>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    function getQueryParam(name) {
+      const url = new URL(window.location.href);
+      return url.searchParams.get(name);
+    }
+
+    function usuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function setMsg(text, type) {
+      const el = document.getElementById("msg");
+      el.className = "msg " + (type || "");
+      el.textContent = text || "";
+    }
+
+    async function carregarExercicios() {
+      setMsg("", "");
+      const select = document.getElementById("exerciseSelect");
+      select.innerHTML = `<option value="">Carregando...</option>`;
+
+      try {
+        const resp = await fetch(`${API_BASE}/exercises?active_only=true`);
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          select.innerHTML = `<option value="">Erro ao carregar</option>`;
+          setMsg((data && data.detail) ? data.detail : "Erro ao carregar exercícios.", "err");
+          return;
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          select.innerHTML = `<option value="">Nenhum exercício cadastrado</option>`;
+          return;
+        }
+
+        select.innerHTML = "";
+        data.forEach(ex => {
+          const opt = document.createElement("option");
+          opt.value = ex.id;
+          const cat = ex.category ? ` • ${ex.category}` : "";
+          opt.textContent = `${ex.name}${cat}`;
+          select.appendChild(opt);
+        });
+      } catch (e) {
+        console.error(e);
+        select.innerHTML = `<option value="">Erro ao carregar</option>`;
+        setMsg("Erro inesperado ao carregar exercícios (veja o console).", "err");
+      }
+    }
+
+    async function prescrever() {
+      setMsg("", "");
+
+      const patientId = Number(document.getElementById("patient-id-input").value); 7
+      console.log(patientId);
+      if (!patientId) {
+        setMsg("Patient_id não encontrado na URL. Volte e clique em 'Prescrever exercícios' no paciente.", "err");
+        return;
+      }
+
+      const fisio = usuarioLogado();
+      if (!fisio || fisio.tipo !== "fisioterapeuta") {
+        setMsg("Faça login como fisioterapeuta para prescrever.", "err");
+        return;
+      }
+
+      const exerciseId = Number(document.getElementById("exerciseSelect").value);
+      const repetitions = Number(document.getElementById("repetitions").value);
+      const series = Number(document.getElementById("series").value);
+      const duration = document.getElementById("duration").value.trim();
+      const weekly = Number(document.getElementById("weekly").value);
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!exerciseId) { setMsg("Selecione um exercício.", "err"); return; }
+      if (!repetitions || repetitions < 1) { setMsg("Repetições inválidas.", "err"); return; }
+      if (!series || series < 1) { setMsg("Séries inválidas.", "err"); return; }
+      if (!weekly || weekly < 1) { setMsg("Frequência semanal inválida.", "err"); return; }
+
+      const body = {
+        difficulty_level: "intermediate",
+        exercise_id: exerciseId,
+        duration_minutes: duration ? Number(duration) : null,
+        notes: notes || null,
+        patient_id: patientId,
+        repetitions: repetitions,
+        series: series,
+        weekly_frequency: weekly
+      };
+
+      console.log(body);
+
+      try {
+        const resp = await fetch(`${API_BASE}/prescriptions?physiotherapist_id=${fisio.id}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        const data = await resp.json().catch(() => ({}));
+
+        console.log(resp);
+
+        if (!resp.ok) {
+          console.error("Erro prescrição:", data);
+          setMsg((data && data.detail) ? data.detail : "Erro ao prescrever.", "err");
+          return;
+        }
+
+        setMsg("Prescrição criada com sucesso! ✅", "ok");
+        // opcional: limpar alguns campos
+        document.getElementById("notes").value = "";
+      } catch (e) {
+        console.error(e);
+        setMsg("Erro inesperado ao prescrever (veja o console).", "err");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const patientId = getQueryParam("patient_id");
+      carregarExercicios();
+    });
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
+</body>
+
+</html>

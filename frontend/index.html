@@ -1,13 +1,205 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>MoveOn - Escolha seu perfil</title>
+  <script>
+    // Client-side route loader: allow URLs like /login to serve /login.html
+    (function () {
+      try {
+        const p = location.pathname;
+        if (p && p !== '/' && !p.endsWith('.html')) {
+          const target = (p.endsWith('/') ? p.slice(0, -1) : p) + '.html';
+          fetch(target, { cache: 'no-store' })
+            .then((res) => {
+              if (!res.ok) throw new Error('not found');
+              return res.text();
+            })
+            .then((html) => {
+              document.open();
+              document.write(html);
+              document.close();
+            })
+            .catch(() => {
+              // If specific HTML not found, leave current index (menu) as-is.
+            });
+        }
+      } catch (e) {
+        // Ignore errors and continue
+      }
+    })();
+  </script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      margin-bottom: 24px;
+      color: #111827;
+      text-align: center;
+    }
+
+    .container {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 24px 32px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      text-align: center;
+      max-width: 320px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #111827;
+    }
+
+    .card p {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #4b5563;
+      font-size: 0.95rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: none;
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+      background: #2563eb;
+      color: #ffffff;
+      transition: background 0.2s ease, transform 0.1s ease;
+    }
+
+    .btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    footer {
+      margin-top: 32px;
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bem-vindo ao MoveOn</h1>
+
+  <div class="container">
+    <div class="card">
+        <h2>Sou Fisioterapeuta</h2>
+         <p>
+            Acesse o espaço do fisioterapeuta para cadastrar pacientes, definir metas
+            e acompanhar a evolução de cada caso.
+        </p>
+        <a class="btn" href="/login">Entrar como fisioterapeuta</a>
+    </div>
+
+    <div class="card">
+      <h2>Sou Paciente</h2>
+      <p>
+        Consulte suas metas, notificações e orientações passadas pelo seu
+        fisioterapeuta.
+      </p>
+      <!-- Já podemos aproveitar a página que você usa para metas/notificações -->
+      <a class="btn" href="/login?next=/paciente_area">Entrar como Paciente</a>
+    </div>
+  </div>
+
+  <footer>
+    Protótipo de navegação – uso interno do time MoveOn.
+  </footer>
+  <!-- Floating physiotherapist signup (redirect to full form) -->
+  <div class="corner-fisio" id="cornerFisio">
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="fisio-header">Quer trabalhar conosco?</div>
+      <div style="font-size:0.88rem;color:#374151">Faça seu cadastro rápido como fisioterapeuta.</div>
+      <a class="btn" href="/fisio_cadastro">Cadastrar-se</a>
+      <div id="fisio_msg" class="fisio-msg"></div>
+    </div>
+  </div>
+</body>
+<script>
+  // Ensure any patient-entry links point to login with next=/paciente_area
+  (function(){
+    document.querySelectorAll('a').forEach(a=>{
+      try{
+        const txt = (a.textContent||'').trim().toLowerCase();
+        const href = a.getAttribute('href')||'';
+        if (txt.includes('paciente') || /paciente_area/.test(href) || href.endsWith('paciente_area.html')) {
+          a.setAttribute('href','/login?next=/paciente_area');
+        }
+      }catch(e){}
+    });
+  })();
+</script>
+<style>
+  .corner-fisio{
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    width: 220px;
+    background: linear-gradient(180deg,#ffffffcc,#f8fafccc);
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(2,6,23,0.15);
+    padding: 12px;
+    backdrop-filter: blur(6px);
+    font-family: inherit;
+    z-index: 1200;
+  }
+  .corner-fisio form{display:flex;flex-direction:column;gap:8px}
+  .corner-fisio .fisio-header{font-size:0.92rem;font-weight:600;color:#0f172a}
+  .corner-fisio input{padding:8px 10px;border-radius:8px;border:1px solid #e6edf3;font-size:0.9rem}
+  .corner-fisio .btn{padding:8px 10px;border-radius:8px;font-size:0.9rem}
+  .fisio-msg{font-size:0.82rem;color:#065f46;margin-top:4px}
+  .fisio-msg.err{color:#b91c1c}
+</style>
+<script>
+  const API_BASE = "http://127.0.0.1:8000/api";
+  async function registerFisio(){
+    const name = document.getElementById('fisio_name').value.trim();
+    const email = document.getElementById('fisio_email').value.trim();
+    const msgEl = document.getElementById('fisio_msg');
+    msgEl.className = 'fisio-msg';
+    msgEl.textContent = '';
+    if(!name || !email){ msgEl.classList.add('err'); msgEl.textContent = 'Preencha nome e email'; return; }
+    try{
+      const resp = await fetch(`${API_BASE}/fisioterapeutas`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ nome: name, email: email, cpf: '', registro: '' })
+      });
+      const data = await resp.json();
+      if(!resp.ok){ msgEl.classList.add('err'); msgEl.textContent = data.detail || 'Erro ao cadastrar'; return; }
+      msgEl.classList.remove('err');
+      msgEl.textContent = 'Cadastro recebido — checaremos em breve.';
+      document.getElementById('fisioForm').reset();
+      setTimeout(()=> msgEl.textContent='',4000);
+    }catch(e){ msgEl.classList.add('err'); msgEl.textContent = 'Erro de conexão'; }
+  }
+</script>
 </html>

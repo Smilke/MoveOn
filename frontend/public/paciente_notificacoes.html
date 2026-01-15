@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minhas notificações - MoveOn</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 40px auto;
+      padding: 0 16px 80px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin: 0 0 4px 0;
+    }
+    p.sub {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.95rem;
+    }
+    .auth-info {
+      text-align: right;
+      font-size: 0.9rem;
+    }
+    .auth-info span.status {
+      color: #6b7280;
+      display: block;
+    }
+    .auth-info span.nome {
+      font-weight: 600;
+      display: block;
+    }
+    .btn-sair {
+      margin-top: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-sair:hover {
+      background: #fecaca;
+    }
+
+    .top-link {
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .top-link:hover {
+      text-decoration: underline;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 1.3rem;
+    }
+    .card p {
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: #4b5563;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .lista-notificacoes {
+      font-size: 0.95rem;
+      color: #4b5563;
+      margin-top: 8px;
+    }
+    .noti-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .noti-item:last-child {
+      border-bottom: none;
+    }
+    .noti-tipo {
+      font-weight: 600;
+      display: block;
+    }
+    .noti-data {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .msg {
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .msg.err { color: #dc2626; }
+    .msg.ok  { color: #16a34a; }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <a href="/paciente_area" class="top-link">← Voltar para a área do paciente</a>
+        <h1>Minhas notificações</h1>
+        <p class="sub">
+          Aqui você vê avisos sobre metas, exercícios e outras atualizações do seu tratamento.
+        </p>
+      </div>
+
+      <div class="auth-info">
+        <span class="status" id="status-autenticacao">Não autenticado</span>
+        <span class="nome" id="nome-paciente"></span>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2>Notificações</h2>
+        <button class="btn-primary" onclick="carregarNotificacoes()">Atualizar</button>
+      </div>
+
+      <div id="lista-notificacoes" class="lista-notificacoes">
+        Não foi possível identificar o paciente logado.
+      </div>
+      <div id="mensagem-notificacoes" class="msg"></div>
+    </section>
+
+    <footer>
+      Protótipo de navegação — uso interno do time MoveOn.
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000/api";
+
+    function obterUsuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Erro ao ler usuário logado:", e);
+        return null;
+      }
+    }
+
+    function atualizarHeader() {
+      const usuario = obterUsuarioLogado();
+      const statusEl = document.getElementById("status-autenticacao");
+      const nomeEl = document.getElementById("nome-paciente");
+
+      if (!usuario || usuario.tipo !== "paciente") {
+        statusEl.textContent = "Não autenticado";
+        nomeEl.textContent = "";
+        return;
+      }
+
+      statusEl.textContent = "Logado como:";
+      nomeEl.textContent = usuario.nome || "";
+    }
+
+    function sair() {
+      localStorage.removeItem("moveon_usuario_logado");
+      window.location.href = "/login";
+    }
+
+    async function carregarNotificacoes() {
+      const usuario = obterUsuarioLogado();
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
+      const listaEl = document.getElementById("lista-notificacoes");
+      const msgEl = document.getElementById("mensagem-notificacoes");
+
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+
+      if (!usuario || usuario.tipo !== "paciente") {
+        listaEl.textContent = "Não foi possível identificar o paciente logado.";
+        msgEl.textContent = "Faça login como paciente para ver as notificações.";
+        msgEl.classList.add("err");
+        return;
+      }
+
+      const cpfPaciente = usuario.cpf;
+
+      try {
+        const resp = await fetch(`${API_BASE}/pacientes/${cpfPaciente}/notificacoes`);
+        if (!resp.ok) {
+          const data = await resp.json().catch(() => null);
+          console.error("Erro ao buscar notificações:", resp.status, data);
+          listaEl.textContent = "Erro ao carregar notificações.";
+          msgEl.textContent = (data && data.detail) || "Verifique o backend.";
+          msgEl.classList.add("err");
+          return;
+        }
+
+        const notificacoes = await resp.json();
+        if (!Array.isArray(notificacoes) || notificacoes.length === 0) {
+          listaEl.textContent = "Nenhuma notificação no momento.";
+          return;
+        }
+
+        listaEl.innerHTML = "";
+        notificacoes.forEach((n) => {
+          const div = document.createElement("div");
+          div.className = "noti-item";
+          div.innerHTML = `
+            <span class="noti-tipo">${n.tipo || "Notificação"}</span>
+            <span class="noti-data">${n.data_hora || ""}</span><br>
+            ${n.mensagem || JSON.stringify(n)}
+          `;
+          listaEl.appendChild(div);
+        });
+
+      } catch (err) {
+        console.error("Erro inesperado ao buscar notificações:", err);
+        listaEl.textContent = "Erro inesperado ao carregar notificações.";
+        msgEl.textContent = "Veja o console para mais detalhes.";
+        msgEl.classList.add("err");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      atualizarHeader();
+      // Se quiser, já carrega na entrada:
+      // carregarNotificacoes();
+    });
+  </script>
+</body>
+</html>

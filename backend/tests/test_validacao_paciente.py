@@ -12,6 +12,7 @@ def test_validacao_paciente_dados_validos_sao_aceitos():
         "cpf": "12345678900",
         "situacao" : "em tratamento",
 
+
     } 
 
     erros = validar_dados_paciente(dados)

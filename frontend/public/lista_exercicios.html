@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Biblioteca de Exercícios - MoveOn</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="page">
+        <div class="card">
+            <div class="top">
+                <a class="back" href="/fisio_area">← Voltar para a área do fisioterapeuta</a>
+            </div>
+
+            <div class="top">
+                <h1>Biblioteca de Exercícios</h1>
+                <button class="btn" onclick="abrirModalExercicio()">+ Novo Exercício</button>
+            </div>
+
+            <table style="margin-top:24px;">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Categoria</th>
+                        <th>Dificuldade</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-exercicios">
+                    <tr>
+                        <td colspan="3" style="text-align:center">Carregando...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Novo Exercício -->
+    <div id="modal-exercicio"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
+        <div class="card" style="width: 500px; max-width:90%;">
+            <h2>Novo Exercício</h2>
+            <div class="grid">
+                <div class="full">
+                    <label>Nome do Exercício</label>
+                    <input type="text" id="ex-nome">
+                </div>
+                <div class="full">
+                    <label>Descrição</label>
+                    <input type="text" id="ex-desc">
+                </div>
+                <div>
+                    <label>Categoria</label>
+                    <input type="text" id="ex-cat" placeholder="Ex: Alongamento">
+                </div>
+                <div>
+                    <label>Dificuldade</label>
+                    <select id="ex-diff">
+                        <option value="beginner">Iniciante</option>
+                        <option value="intermediate">Intermediário</option>
+                        <option value="advanced">Avançado</option>
+                    </select>
+                </div>
+                <div class="full">
+                    <button class="btn" onclick="criarExercicio()">Salvar</button>
+                    <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8000/api";
+
+        async function carregarExercicios() {
+            const tbody = document.getElementById("lista-exercicios");
+            try {
+                const resp = await fetch(`${API_BASE}/exercises`);
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    tbody.innerHTML = `<tr><td colspan="3">Erro ao carregar</td></tr>`;
+                    return;
+                }
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center">Nenhum exercício cadastrado.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                data.forEach(ex => {
+                    const tr = document.createElement("tr");
+
+                    let badgeClass = "badge-green";
+                    if (ex.difficulty === "intermediate") badgeClass = "badge-blue";
+                    if (ex.difficulty === "advanced") badgeClass = "badge-gray";
+
+                    // Traduzir dificuldade
+                    const diffMap = { beginner: "Iniciante", intermediate: "Intermediário", advanced: "Avançado" };
+                    const diffLabel = diffMap[ex.difficulty] || ex.difficulty;
+
+                    tr.innerHTML = `
+                        <td>
+                            <b>${ex.name}</b><br>
+                            <span style="font-size:0.85rem; color:#6b7280">${ex.description || ""}</span>
+                        </td>
+                        <td>${ex.category || "-"}</td>
+                        <td><span class="badge ${badgeClass}">${diffLabel}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = `<tr><td colspan="4">Erro de conexão</td></tr>`;
+            }
+        }
+
+        function abrirModalExercicio() {
+            document.getElementById("modal-exercicio").style.display = "flex";
+        }
+        function fecharModal() {
+            document.getElementById("modal-exercicio").style.display = "none";
+        }
+
+        async function criarExercicio() {
+            const name = document.getElementById("ex-nome").value;
+            const description = document.getElementById("ex-desc").value;
+            const category = document.getElementById("ex-cat").value;
+            const difficulty = document.getElementById("ex-diff").value;
+
+            if (!name) return alert("Nome é obrigatório");
+
+            try {
+                const resp = await fetch(`${API_BASE}/exercises`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, description, category, difficulty })
+                });
+
+                if (resp.ok) {
+                    alert("Exercício criado!");
+                    document.getElementById("ex-nome").value = "";
+                    document.getElementById("ex-desc").value = "";
+                    fecharModal();
+                    carregarExercicios();
+                } else {
+                    const err = await resp.json();
+                    alert("Erro: " + (err.detail || "Desconhecido"));
+                }
+            } catch (e) {
+                alert("Erro de conexão");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", carregarExercicios);
+    </script>
+    <script>
+        (function(){
+            document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+                const href = a.getAttribute('href');
+                if (!href.match(/^https?:\/\//)) {
+                    const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+                    a.setAttribute('href','/' + p);
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>
