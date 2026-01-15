@@ -26,3 +26,27 @@ export async function apiPost(path: string, body: unknown) {
 
   return res.json();
 }
+
+export async function apiPostForm(path: string, formData: FormData) {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    body: formData,
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    // tenta parsear JSON de erro quando possível
+    let detail = text;
+    try {
+      const j = JSON.parse(text);
+      detail = j.detail ?? JSON.stringify(j);
+    } catch (_) {}
+    throw new Error(`Erro na requisição: ${res.status} - ${detail}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch (_) {
+    return text;
+  }
+}

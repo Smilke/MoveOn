@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Meu Relatório - MoveOn</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="top">
+        <a class="back" href="/paciente_area">← Voltar</a>
+        <div class="row-actions" style="margin-top:0">
+          <button class="btn btn-secondary btn-small" onclick="logout()">Sair</button>
+        </div>
+      </div>
+
+      <h1>Meu relatório</h1>
+      <p class="sub">Resumo do seu progresso e execuções no período.</p>
+
+      <div class="row-actions">
+        <button class="btn btn-secondary btn-small" onclick="carregarRelatorio('last_week', this)">Última semana</button>
+        <button class="btn btn-secondary btn-small" onclick="carregarRelatorio('last_month', this)">Último mês</button>
+        <button class="btn btn-secondary btn-small" onclick="carregarRelatorio('last_3_months', this)">Últimos 3 meses</button>
+      </div>
+
+      <div class="grid" style="margin-top:10px; align-items:end">
+        <div>
+          <label>Data início (custom)</label>
+          <input type="date" id="custom-start" />
+        </div>
+        <div>
+          <label>Data fim (custom)</label>
+          <input type="date" id="custom-end" />
+        </div>
+        <div class="full">
+          <button class="btn btn-small" onclick="carregarCustom()">Carregar período custom</button>
+        </div>
+      </div>
+
+      <div id="msg" class="msg"></div>
+
+      <div id="conteudo" style="margin-top:18px;">
+        <div class="hint">Carregue um período para visualizar seu relatório.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+    var API_BASE = window.API_BASE;
+
+    const usuario = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
+    if (!usuario || usuario.tipo !== "paciente") {
+      window.location.href = "/login";
+    }
+
+    let periodoSelecionado = 'last_month';
+
+    function logout() {
+      localStorage.removeItem("moveon_usuario_logado");
+      window.location.href = "/login";
+    }
+
+    function setMsg(text, type) {
+      const el = document.getElementById('msg');
+      el.className = 'msg ' + (type || '');
+      el.textContent = text || '';
+    }
+
+    function formatDateTime(dtStr) {
+      try {
+        return new Date(dtStr).toLocaleString('pt-BR');
+      } catch {
+        return dtStr;
+      }
+    }
+
+    function renderReport(report) {
+      const el = document.getElementById('conteudo');
+
+      if (!report || !report.has_data) {
+        el.innerHTML = `<div class="hint">Sem dados suficientes neste período.</div>`;
+        return;
+      }
+
+      const prog = report.progress || {};
+      const periodText = `${formatDateTime(report.period_start)} → ${formatDateTime(report.period_end)}`;
+
+      const prescribed = Array.isArray(report.prescribed_exercises) ? report.prescribed_exercises : [];
+      const prescribedHtml = prescribed.length
+        ? `<ul style="margin:6px 0 0 0; padding-left:18px;">
+            ${prescribed.map(x => `<li>${x.name}${x.category ? ` <span style="color:#6b7280">(${x.category})</span>` : ''}</li>`).join('')}
+           </ul>`
+        : `<div style="color:#6b7280; font-size:0.95rem; margin-top:6px;">Nenhum exercício prescrito listado.</div>`;
+
+      const executions = Array.isArray(report.executions) ? report.executions : [];
+      const executionsHtml = executions.length
+        ? executions.map(ex => {
+            const exName = ex.exercise && ex.exercise.name ? ex.exercise.name : 'Exercício';
+            const exDate = ex.execution_date ? formatDateTime(ex.execution_date) : 'data desconhecida';
+            const completed = ex.was_completed ? 'Sim' : 'Não';
+            const completionRate = (ex.completion_rate !== undefined && ex.completion_rate !== null) ? `${Number(ex.completion_rate).toFixed(0)}%` : '-';
+
+            const painLevels = Array.isArray(ex.pain_levels) ? ex.pain_levels : [];
+            const latestPain = painLevels.length ? painLevels[0] : null;
+            const patientComments = [];
+            if (latestPain) {
+              if (latestPain.pain_level !== undefined && latestPain.pain_level !== null) patientComments.push(`Dor: ${latestPain.pain_level}`);
+              if (latestPain.pain_location) patientComments.push(`Local: ${latestPain.pain_location}`);
+              if (latestPain.notes) patientComments.push(`Obs: ${latestPain.notes}`);
+            }
+            const patientCommentsHtml = patientComments.length
+              ? `<ul style="margin:6px 0 0 0; padding-left:18px;">${patientComments.map(t => `<li>${t}</li>`).join('')}</ul>`
+              : `<div style="color:#6b7280; font-size:0.9rem; margin-top:6px;">Sem comentários do paciente.</div>`;
+
+            const feedbacks = Array.isArray(ex.feedbacks) ? ex.feedbacks : [];
+            const feedbackHtml = feedbacks.length
+              ? `<ul style="margin:6px 0 0 0; padding-left:18px;">
+                   ${feedbacks.slice(0, 3).map(f => `<li>${f.content}</li>`).join('')}
+                 </ul>`
+              : `<div style="color:#6b7280; font-size:0.9rem; margin-top:6px;">Sem comentários do fisioterapeuta.</div>`;
+
+
+            return `
+              <div class="card" style="box-shadow:none; border:1px solid #e5e7eb; margin-top:10px;">
+                <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                  <div>
+                    <div style="font-size:1rem;"><b>${exName}</b></div>
+                    <div style="color:#6b7280; font-size:0.9rem; margin-top:4px;">${exDate}</div>
+                  </div>
+                  <div style="text-align:right; font-size:0.9rem; color:#374151;">
+                    <div><b>Concluído:</b> ${completed}</div>
+                    <div><b>Conclusão:</b> ${completionRate}</div>
+                  </div>
+                </div>
+                <div style="margin-top:10px; color:#374151; font-size:0.95rem;"><b>Comentários do paciente:</b>${patientCommentsHtml}</div>
+                <div style="margin-top:10px; color:#374151; font-size:0.95rem;"><b>Comentários do fisioterapeuta:</b>${feedbackHtml}</div>
+              </div>
+            `;
+          }).join('')
+        : `<div class="hint">Nenhuma execução registrada neste período.</div>`;
+
+      el.innerHTML = `
+        <div class="hint" style="background:#f9fafb;">
+          <div><b>Período:</b> ${periodText}</div>
+          <div style="margin-top:6px;"><b>Total execuções:</b> ${prog.total_executions ?? '-'}</div>
+          <div><b>Média conclusão:</b> ${prog.completion_rate_avg ?? '-'}%</div>
+          <div><b>Média dor:</b> ${prog.pain_level_avg ?? '-'}</div>
+          <div><b>Exercícios completados:</b> ${prog.exercises_completed ?? '-'}</div>
+          <div><b>Exercícios prescritos:</b> ${prog.exercises_prescribed ?? '-'}</div>
+          <div><b>Aderência:</b> ${prog.adherence_rate ?? '-'}%</div>
+        </div>
+
+        <div style="margin-top:18px;">
+          <h3 style="margin:0; font-size:1.05rem; color:#374151;">Exercícios prescritos</h3>
+          ${prescribedHtml}
+        </div>
+
+        <div style="margin-top:18px;">
+          <h3 style="margin:0; font-size:1.05rem; color:#374151;">Exercícios realizados</h3>
+          ${executionsHtml}
+        </div>
+      `;
+    }
+
+    async function carregarRelatorio(periodo, btn) {
+      periodoSelecionado = periodo;
+      setMsg('Carregando...', '');
+
+      try {
+        const resp = await fetch(`${API_BASE}/patients/${usuario.id}/reports?period_filter=${periodo}`);
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          setMsg((data && data.detail) ? data.detail : 'Erro ao carregar relatório', 'err');
+          return;
+        }
+
+        setMsg('', '');
+        renderReport(data);
+      } catch (e) {
+        console.error(e);
+        setMsg('Erro de conexão ao carregar relatório', 'err');
+      }
+    }
+
+    async function carregarCustom() {
+      const start = document.getElementById('custom-start').value;
+      const end = document.getElementById('custom-end').value;
+      if (!start || !end) {
+        setMsg('Selecione data início e fim.', 'err');
+        return;
+      }
+      setMsg('Carregando...', '');
+
+      try {
+        const url = `${API_BASE}/patients/${usuario.id}/reports?period_filter=custom&start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          setMsg((data && data.detail) ? data.detail : 'Erro ao carregar relatório', 'err');
+          return;
+        }
+
+        setMsg('', '');
+        renderReport(data);
+      } catch (e) {
+        console.error(e);
+        setMsg('Erro de conexão ao carregar relatório', 'err');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarRelatorio('last_month');
+    });
+  </script>
+
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Trocar senha - MoveOn</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="page" style="max-width: 420px; margin-top: 90px;">
+    <div class="card">
+      <h1>Trocar senha</h1>
+      <p class="sub">No primeiro login, defina uma nova senha.</p>
+
+      <div class="grid" style="margin-top: 18px;">
+        <div class="full">
+          <label>Senha atual</label>
+          <input type="password" id="senha_atual" placeholder="Senha atual">
+        </div>
+        <div class="full">
+          <label>Nova senha</label>
+          <input type="password" id="nova_senha" placeholder="Mínimo 8 caracteres">
+        </div>
+        <div class="full">
+          <button id="trocarBtn" class="btn">Confirmar</button>
+          <div id="msg" class="msg"></div>
+        </div>
+      </div>
+
+      <p class="sub" style="margin-top: 14px; font-size: 0.85rem; text-align:center;">
+        Se você esqueceu sua senha, use <a href="/esqueci_senha">recuperação de senha</a>.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+    var API_BASE = window.API_BASE;
+
+    const user = JSON.parse(localStorage.getItem('moveon_usuario_logado') || 'null');
+    if (!user || user.tipo !== 'paciente' || !user.id) {
+      window.location.href = '/login?next=trocar_senha';
+    }
+
+    function setMsg(text, type) {
+      const el = document.getElementById('msg');
+      el.className = 'msg ' + (type || '');
+      el.textContent = text || '';
+    }
+
+    async function trocarSenha() {
+      setMsg('', '');
+      const senha_atual = document.getElementById('senha_atual').value;
+      const nova_senha = document.getElementById('nova_senha').value;
+
+      if (!senha_atual || !nova_senha) {
+        setMsg('Preencha a senha atual e a nova senha.', 'err');
+        return;
+      }
+      if (String(nova_senha).length < 8) {
+        setMsg('A nova senha deve ter no mínimo 8 caracteres.', 'err');
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${API_BASE}/patients/${user.id}/trocar-senha`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha_atual, nova_senha }),
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) {
+          setMsg((data && data.detail) ? data.detail : 'Erro ao trocar senha.', 'err');
+          return;
+        }
+
+        // update local cached user
+        user.must_change_password = false;
+        localStorage.setItem('moveon_usuario_logado', JSON.stringify(user));
+
+        const nextParam = new URLSearchParams(window.location.search).get('next');
+        if (nextParam) {
+          window.location.href = nextParam;
+          return;
+        }
+        window.location.href = '/paciente_area';
+      } catch (e) {
+        console.error(e);
+        setMsg('Erro de conexão com o servidor.', 'err');
+      }
+    }
+
+    try {
+      const btn = document.getElementById('trocarBtn');
+      if (btn) btn.addEventListener('click', trocarSenha);
+    } catch (e) {}
+  </script>
+  <script>
+    (function () {
+      document.querySelectorAll('a[href$=".html"]').forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/, '').replace(/\.html$/, '');
+          a.setAttribute('href', '/' + p);
+        }
+      });
+    })();
+  </script>
+</body>
+
+</html>

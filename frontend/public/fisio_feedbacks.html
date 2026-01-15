@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Feedbacks dos Pacientes - Fisioterapeuta - MoveOn</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .page {
+      width: 100%;
+      max-width: 900px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px 24px 20px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 4px 0;
+      font-size: 1.6rem;
+    }
+    p.sub {
+      margin: 0;
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+    .auth-info {
+      text-align: right;
+      font-size: 0.9rem;
+    }
+    .auth-info span.status {
+      color: #6b7280;
+      display: block;
+    }
+    .auth-info span.nome {
+      font-weight: 600;
+      display: block;
+    }
+    .btn-sair {
+      margin-top: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-sair:hover {
+      background: #fecaca;
+    }
+
+    .top-link {
+      display: inline-block;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+    }
+    .top-link:hover {
+      text-decoration: underline;
+    }
+
+    .filtros {
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+    .filtros input {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      font-size: 0.85rem;
+      margin-right: 8px;
+    }
+    .filtros button {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .filtros button:hover {
+      background: #1d4ed8;
+    }
+
+    .lista-feedbacks {
+      margin-top: 12px;
+      font-size: 0.95rem;
+      color: #4b5563;
+    }
+    .feedback-item {
+      padding: 10px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .feedback-item:last-child {
+      border-bottom: none;
+    }
+    .feedback-item strong {
+      display: inline-block;
+      margin-bottom: 2px;
+    }
+    .badge-avaliacao {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 0.75rem;
+      margin-left: 4px;
+    }
+
+    .msg {
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+    .msg.err { color: #dc2626; }
+    .msg.ok  { color: #16a34a; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <a href="/fisio_area" class="top-link">← Voltar para área do fisioterapeuta</a>
+
+    <div class="card">
+      <header>
+        <div>
+          <h1>Feedbacks dos pacientes</h1>
+          <p class="sub">
+            Visualize os feedbacks enviados pelos pacientes vinculados a você.
+          </p>
+        </div>
+
+        <div class="auth-info">
+          <span class="status" id="status-autenticacao">Não autenticado</span>
+          <span class="nome" id="nome-fisio"></span>
+          <button class="btn-sair" onclick="sair()">Sair</button>
+        </div>
+      </header>
+
+      <section class="filtros">
+        <label for="filtro-paciente-id">Filtrar por CPF do paciente (opcional):</label>
+        <input type="text" id="filtro-paciente-id" placeholder="CPF do paciente" />
+        <button onclick="carregarFeedbacks()">Buscar feedbacks</button>
+      </section>
+
+      <section>
+        <div id="lista-feedbacks" class="lista-feedbacks">
+          Clique em "Buscar feedbacks" para carregar.
+        </div>
+        <div id="mensagem-feedbacks" class="msg"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+    var API_BASE = window.API_BASE;
+
+    function obterUsuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try {
+        return JSON.parse(raw);
+      } catch (e) {
+        console.error("Erro ao ler usuário logado:", e);
+        return null;
+      }
+    }
+
+    function atualizarHeader() {
+      const usuario = obterUsuarioLogado();
+      const statusEl = document.getElementById("status-autenticacao");
+      const nomeEl = document.getElementById("nome-fisio");
+
+      if (!usuario || usuario.tipo !== "fisioterapeuta") {
+        statusEl.textContent = "Não autenticado";
+        nomeEl.textContent = "";
+        return;
+      }
+
+      statusEl.textContent = "Logado como:";
+      nomeEl.textContent = usuario.nome || "";
+    }
+
+    function sair() {
+      localStorage.removeItem("moveon_usuario_logado");
+      window.location.href = "/login";
+    }
+
+    async function carregarFeedbacks() {
+      const usuario = obterUsuarioLogado();
+      const listaEl = document.getElementById("lista-feedbacks");
+      const msgEl = document.getElementById("mensagem-feedbacks");
+
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+
+      if (!usuario || usuario.tipo !== "fisioterapeuta") {
+        listaEl.textContent = "Você precisa estar logado como fisioterapeuta.";
+        msgEl.textContent = "Faça login novamente.";
+        msgEl.classList.add("err");
+        return;
+      }
+
+      const cpfFisio = usuario.cpf;
+      const filtroPaciente = document.getElementById("filtro-paciente-id").value.trim();
+
+      let url = `${API_BASE}/fisioterapeutas/${cpfFisio}/feedbacks`;
+      if (filtroPaciente) {
+        url += `?paciente_id=${encodeURIComponent(filtroPaciente)}`;
+      }
+
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) {
+          console.error("Erro ao buscar feedbacks:", resp.status);
+          listaEl.textContent = "Erro ao carregar feedbacks.";
+          msgEl.textContent = "Verifique o backend ou o CPF do fisioterapeuta.";
+          msgEl.classList.add("err");
+          return;
+        }
+
+        const feedbacks = await resp.json();
+
+        if (!Array.isArray(feedbacks) || feedbacks.length === 0) {
+          listaEl.textContent = "Nenhum feedback encontrado para os filtros selecionados.";
+          return;
+        }
+
+        listaEl.innerHTML = "";
+        feedbacks.forEach((fb) => {
+          const div = document.createElement("div");
+          div.className = "feedback-item";
+
+          const avaliacao = fb.avaliacao != null ? fb.avaliacao : null;
+
+          div.innerHTML = `
+            <strong>Paciente: ${fb.paciente_id || "-"}</strong>
+            ${
+              avaliacao
+                ? `<span class="badge-avaliacao">Avaliação: ${avaliacao}/5</span>`
+                : ""
+            }
+            <br>
+            <span><strong>Mensagem:</strong> ${fb.mensagem || fb.feedback || ""}</span>
+          `;
+
+          listaEl.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao buscar feedbacks:", err);
+        listaEl.textContent = "Erro inesperado ao carregar feedbacks.";
+        msgEl.textContent = "Veja o console para mais detalhes.";
+        msgEl.classList.add("err");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      atualizarHeader();
+      // se quiser carregar automaticamente:
+      // carregarFeedbacks();
+    });
+  </script>
+  <script>
+    // Rewrite any remaining links ending with .html to route-style (remove extension)
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minhas Prescrições - MoveOn</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f3f4f6;color:#111827}
+    .page{max-width:960px;margin:40px auto;padding:0 16px 60px}
+    .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+    .back{color:#4b5563;text-decoration:none;font-size:.9rem}
+    .back:hover{text-decoration:underline}
+    h1{margin:0;font-size:1.6rem}
+    .sub{margin:6px 0 0;color:#6b7280}
+    .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 10px 25px rgba(15,23,42,.08);margin-top:14px}
+    .msg{margin-top:10px;font-size:.9rem}
+    .msg.err{color:#dc2626}
+    .msg.ok{color:#16a34a}
+    .item{padding:12px 0;border-bottom:1px solid #e5e7eb}
+    .item:last-child{border-bottom:none}
+    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:.78rem;font-weight:700}
+    .muted{color:#6b7280;font-size:.9rem}
+    .btn{padding:8px 14px;border-radius:999px;border:none;background:#2563eb;color:#fff;font-weight:600;cursor:pointer}
+    .btn:hover{background:#1d4ed8}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top">
+      <a class="back" href="/paciente_area">← Voltar</a>
+      <button class="btn" onclick="carregar()">Atualizar</button>
+    </div>
+
+    <h1>Minhas prescrições</h1>
+    <p class="sub">Aqui aparecem os exercícios que seu fisioterapeuta passou pra você.</p>
+
+    <div id="msg" class="msg"></div>
+    <div id="lista" class="card"></div>
+  </div>
+
+  <script>
+    window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+    var API_BASE = window.API_BASE;
+
+    function obterUsuarioLogado() {
+      const raw = localStorage.getItem("moveon_usuario_logado");
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function setMsg(texto, tipo) {
+      const el = document.getElementById("msg");
+      el.className = "msg " + (tipo || "");
+      el.textContent = texto || "";
+    }
+
+    async function carregar() {
+      const lista = document.getElementById("lista");
+      lista.innerHTML = "";
+      setMsg("", "");
+
+      const usuario = obterUsuarioLogado();
+
+      if (!usuario || usuario.tipo !== "paciente") {
+        setMsg("Faça login como paciente para ver suas prescrições.", "err");
+        lista.innerHTML = "<div class='muted'>Nenhum dado para exibir.</div>";
+        return;
+      }
+
+      // Preferência: usar ID do paciente no BD
+      const patientId = usuario.id || usuario.patient_id;
+
+      if (!patientId) {
+        setMsg("Não consegui identificar seu ID no banco. Refaça o login ou cadastre o paciente via API para gerar ID.", "err");
+        lista.innerHTML = "<div class='muted'>Sem ID de paciente.</div>";
+        return;
+      }
+
+      try {
+        // ⚠️ Ajusta essa rota conforme teu backend:
+        // opção A: /patients/{id}/prescriptions
+        // opção B: /pacientes/{id}/prescricoes
+        const resp = await fetch(`${API_BASE}/patients/${patientId}/prescriptions`);
+
+        if (!resp.ok) {
+          let err = null;
+          try { err = await resp.json(); } catch {}
+          setMsg((err && err.detail) ? err.detail : `Erro ao buscar prescrições (${resp.status}).`, "err");
+          lista.innerHTML = "<div class='muted'>Não foi possível carregar.</div>";
+          return;
+        }
+
+        const data = await resp.json();
+        const prescricoes = Array.isArray(data) ? data : (data.prescriptions || data.prescricoes || []);
+
+        if (!prescricoes.length) {
+          setMsg("Você não tem prescrições no momento.", "ok");
+          lista.innerHTML = "<div class='muted'>Nenhuma prescrição encontrada.</div>";
+          return;
+        }
+
+        setMsg(`Total: ${prescricoes.length} prescrição(ões).`, "ok");
+
+        lista.innerHTML = prescricoes.map(p => {
+          const nomeEx = (p.exercise && p.exercise.name) || p.exercise_name || `Exercício #${p.exercise_id ?? "-"}`;
+          const reps = p.repetitions ?? "-";
+          const series = p.series ?? "-";
+          const freq = p.weekly_frequency ?? "-";
+          const dur = p.duration_minutes ?? "-";
+          const obs = p.notes ?? "";
+          return `
+            <div class="item">
+              <div class="pill">Exercício</div>
+              <div style="margin-top:6px"><strong>${nomeEx}</strong></div>
+              <div class="muted">Séries: ${series} • Repetições: ${reps} • Duração: ${dur} min • Frequência: ${freq}/sem</div>
+              ${obs ? `<div style="margin-top:6px" class="muted"><strong>Obs:</strong> ${obs}</div>` : ""}
+            </div>
+          `;
+        }).join("");
+
+      } catch (e) {
+        console.error(e);
+        setMsg("Erro inesperado ao buscar prescrições. Veja o console.", "err");
+        lista.innerHTML = "<div class='muted'>Erro inesperado.</div>";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", carregar);
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

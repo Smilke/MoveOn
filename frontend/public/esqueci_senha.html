@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recuperar senha - MoveOn</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+      width: 100%;
+      max-width: 480px;
+      box-sizing: border-box;
+    }
+    h1 {
+      margin: 0 0 4px;
+      text-align: center;
+      font-size: 1.6rem;
+      color: #111827;
+    }
+    p.sub {
+      margin: 0 0 16px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: #374151;
+    }
+    input {
+      width: 100%;
+      margin-top: 4px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px #2563eb33;
+    }
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    .top-link {
+      display: inline-block;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      color: #4b5563;
+      text-decoration: none;
+    }
+    .top-link:hover {
+      text-decoration: underline;
+    }
+    .section-title {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #111827;
+    }
+    .section-hint {
+      margin: 3px 0 8px;
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+    .info {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #ecfdf5;
+      color: #166534;
+      font-size: 0.85rem;
+      display: none;
+    }
+    .erro {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #fee2e2;
+      color: #b91c1c;
+      font-size: 0.85rem;
+      display: none;
+    }
+    .token-box {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      word-break: break-all;
+      display: none;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-top: 12px;
+    }
+    @media (min-width: 720px) {
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .section-box {
+      padding: 10px 0 0;
+      border-top: 1px solid #e5e7eb;
+    }
+    .small-input {
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="/login" class="top-link">← Voltar para o login</a>
+    <h1>Recuperar senha</h1>
+    <p class="sub">
+      Gere um token de recuperação pelo e-mail cadastrado e defina uma nova senha de acesso.
+    </p>
+
+    <div class="grid-2">
+      <!-- GERAR TOKEN -->
+      <div class="section-box">
+        <div class="section-title">1. Solicitar token</div>
+        <p class="section-hint">
+          Informe o e-mail que você usou no cadastro (paciente ou fisioterapeuta).
+        </p>
+
+        <label for="email-esqueci">E-mail cadastrado</label>
+        <input
+          type="email"
+          id="email-esqueci"
+          class="small-input"
+          placeholder="seuemail@exemplo.com"
+        />
+
+        <button onclick="solicitarRecuperacaoSenha()">
+          Gerar token de recuperação
+        </button>
+
+        <div id="mensagem-esqueci" class="info"></div>
+        <div id="mensagem-esqueci-erro" class="erro"></div>
+        <div id="token-gerado" class="token-box"></div>
+      </div>
+
+      <!-- REDEFINIR SENHA -->
+      <div class="section-box">
+        <div class="section-title">2. Redefinir senha</div>
+        <p class="section-hint">
+          Use o token gerado e escolha uma nova senha (mínimo de 8 caracteres).
+        </p>
+
+        <label for="token-redefinir">Token de recuperação</label>
+        <input
+          type="text"
+          id="token-redefinir"
+          class="small-input"
+          placeholder="cole aqui o token gerado"
+        />
+
+        <label for="nova-senha">Nova senha</label>
+        <input
+          type="password"
+          id="nova-senha"
+          class="small-input"
+          placeholder="nova senha"
+        />
+
+        <button onclick="redefinirSenha()">Confirmar nova senha</button>
+
+        <div id="mensagem-redefinir" class="info"></div>
+        <div id="mensagem-redefinir-erro" class="erro"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
+    var API_BASE = window.API_BASE;
+
+    function tratarDetalheErro(detail) {
+      if (!detail) return "Ocorreu um erro.";
+      if (Array.isArray(detail)) return detail.join(" ");
+      return detail;
+    }
+
+    async function solicitarRecuperacaoSenha() {
+      const email = document.getElementById("email-esqueci").value.trim();
+      const msgOk = document.getElementById("mensagem-esqueci");
+      const msgErro = document.getElementById("mensagem-esqueci-erro");
+      const tokenBox = document.getElementById("token-gerado");
+
+      msgOk.style.display = "none";
+      msgOk.textContent = "";
+      msgErro.style.display = "none";
+      msgErro.textContent = "";
+      tokenBox.style.display = "none";
+      tokenBox.textContent = "";
+
+      if (!email) {
+        msgErro.textContent = "Informe o e-mail cadastrado.";
+        msgErro.style.display = "block";
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${API_BASE}/esqueci-senha`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          console.error("Erro em /esqueci-senha:", data);
+          msgErro.textContent = tratarDetalheErro(data.detail);
+          msgErro.style.display = "block";
+          return;
+        }
+
+        msgOk.textContent = data.mensagem || "Token gerado com sucesso.";
+        msgOk.style.display = "block";
+
+        if (data.token) {
+          tokenBox.textContent = "Token (dev): " + data.token;
+          tokenBox.style.display = "block";
+
+          // preenche o campo de token da seção de redefinição
+          const campoTokenRedefinir = document.getElementById("token-redefinir");
+          campoTokenRedefinir.value = data.token;
+        }
+      } catch (erro) {
+        console.error("Erro inesperado em /esqueci-senha:", erro);
+        msgErro.textContent = "Erro inesperado ao gerar token.";
+        msgErro.style.display = "block";
+      }
+    }
+
+    async function redefinirSenha() {
+      const token = document.getElementById("token-redefinir").value.trim();
+      const novaSenha = document.getElementById("nova-senha").value.trim();
+      const msgOk = document.getElementById("mensagem-redefinir");
+      const msgErro = document.getElementById("mensagem-redefinir-erro");
+
+      msgOk.style.display = "none";
+      msgOk.textContent = "";
+      msgErro.style.display = "none";
+      msgErro.textContent = "";
+
+      if (!token || !novaSenha) {
+        msgErro.textContent = "Informe o token e a nova senha.";
+        msgErro.style.display = "block";
+        return;
+      }
+
+      try {
+        const resp = await fetch(`${API_BASE}/redefinir-senha`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, nova_senha: novaSenha }),
+        });
+
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          console.error("Erro em /redefinir-senha:", data);
+          msgErro.textContent = tratarDetalheErro(data.detail);
+          msgErro.style.display = "block";
+          return;
+        }
+
+        msgOk.textContent = data.mensagem || "Senha redefinida com sucesso.";
+        msgOk.style.display = "block";
+
+        document.getElementById("nova-senha").value = "";
+      } catch (erro) {
+        console.error("Erro inesperado em /redefinir-senha:", erro);
+        msgErro.textContent = "Erro inesperado ao redefinir senha.";
+        msgErro.style.display = "block";
+      }
+    }
+  </script>
+  <script>
+    (function(){
+      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        const href = a.getAttribute('href');
+        if (!href.match(/^https?:\/\//)) {
+          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
+          a.setAttribute('href','/' + p);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
