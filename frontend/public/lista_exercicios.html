@@ -22,7 +22,6 @@
             <table style="margin-top:24px;">
                 <thead>
                     <tr>
-                        <th width="50">ID</th>
                         <th>Nome</th>
                         <th>Categoria</th>
                         <th>Dificuldade</th>
@@ -30,7 +29,7 @@
                 </thead>
                 <tbody id="lista-exercicios">
                     <tr>
-                        <td colspan="4" style="text-align:center">Carregando...</td>
+                        <td colspan="3" style="text-align:center">Carregando...</td>
                     </tr>
                 </tbody>
             </table>
@@ -81,12 +80,12 @@
                 const data = await resp.json();
 
                 if (!resp.ok) {
-                    tbody.innerHTML = `<tr><td colspan="4">Erro ao carregar</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3">Erro ao carregar</td></tr>`;
                     return;
                 }
 
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Nenhum exercício cadastrado.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center">Nenhum exercício cadastrado.</td></tr>`;
                     return;
                 }
 
@@ -103,7 +102,6 @@
                     const diffLabel = diffMap[ex.difficulty] || ex.difficulty;
 
                     tr.innerHTML = `
-                        <td>#${ex.id}</td>
                         <td>
                             <b>${ex.name}</b><br>
                             <span style="font-size:0.85rem; color:#6b7280">${ex.description || ""}</span>

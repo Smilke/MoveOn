@@ -107,7 +107,7 @@
           const opt = document.createElement("option");
           opt.value = ex.id;
           const cat = ex.category ? ` • ${ex.category}` : "";
-          opt.textContent = `#${ex.id} — ${ex.name}${cat}`;
+          opt.textContent = `${ex.name}${cat}`;
           select.appendChild(opt);
         });
       } catch (e) {
