@@ -110,6 +110,7 @@ class ReportResponse(BaseModel):
     executions: List[ExerciseExecutionDetail] = []
     progress: ProgressIndicator
     has_data: bool = Field(..., description="Indica se há dados suficientes para o relatório")
+    prescribed_exercises: List[ExerciseLibraryBasic] = []
 
     class Config:
         json_schema_extra = {

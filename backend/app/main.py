@@ -25,9 +25,11 @@ from app.api.routes_progress_report import router as progress_reports_router
 from app.api.routes_patients_db import router as patients_db_router
 from app.api.routes_fisioterapeuta_db import router as fisioterapeuta_db_router
 from app.api.routes_upload import router as upload_router
+from app.api.routes_videos import router as videos_router
 
 
 def create_app() -> FastAPI:
+    from app.api.routes_video_feedback import router as video_feedback_router
     app = FastAPI(title=settings.PROJECT_NAME)
 
     origins = [
@@ -59,6 +61,14 @@ def create_app() -> FastAPI:
 
     # pacientes
     app.include_router(patients_router, prefix=api_prefix, tags=["patients"])
+    # feedbacks de vídeo
+    app.include_router(video_feedback_router, prefix=api_prefix, tags=["video-feedbacks"])
+
+    # upload de vídeo
+    app.include_router(upload_router, prefix=api_prefix, tags=["upload"])
+
+    # servir vídeos enviados
+    app.include_router(videos_router, prefix=api_prefix, tags=["videos"])
     
     # exercícios e prescrições
     app.include_router(exercises_router, prefix=api_prefix, tags=["exercises"])

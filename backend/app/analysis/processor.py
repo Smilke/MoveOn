@@ -26,11 +26,57 @@ class YOLOPoseWrapper:
         """Detect joint angle sequence for `joint` from a video.
 
         Returns list of (timestamp_seconds, angle_degrees).
-        In production this reads frames and extracts pose keypoints using YOLO pose model.
-        Here we raise NotImplementedError if model not available so tests must mock this method.
+        Usa Ultralytics YOLO para extrair keypoints e calcular o ângulo do joelho ao longo do vídeo.
         """
         if self._model is None:
             raise NotImplementedError("Ultralytics YOLO model not available in this environment")
 
-        # Pseudocode placeholder: real implementation would iterate frames and compute angles
-        raise NotImplementedError("Real video processing not implemented in this environment")
+        import cv2
+        import numpy as np
+        from app.analysis.rules import compute_angle
+
+        cap = cv2.VideoCapture(video_path)
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        results = []
+        frame_idx = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            # YOLO inference
+            yolo_results = self._model(frame)
+            keypoints = None
+            if hasattr(yolo_results, 'keypoints') and yolo_results.keypoints is not None:
+                # Ultralytics >=8.0.0
+                keypoints = yolo_results.keypoints.xy.cpu().numpy() if hasattr(yolo_results.keypoints, 'xy') else None
+            elif hasattr(yolo_results[0], 'keypoints') and yolo_results[0].keypoints is not None:
+                # Ultralytics <8.0.0
+                keypoints = yolo_results[0].keypoints.xy.cpu().numpy() if hasattr(yolo_results[0].keypoints, 'xy') else None
+            if keypoints is not None and len(keypoints) > 0:
+                # Assume first person
+                kp = keypoints[0]
+                # COCO: 11=left_hip, 13=left_knee, 15=left_ankle
+                #        12=right_hip, 14=right_knee, 16=right_ankle
+                if joint == "knee":
+                    # Média dos dois joelhos
+                    angles = []
+                    # Left
+                    if kp.shape[0] >= 17:
+                        a = tuple(kp[11])  # left_hip
+                        b = tuple(kp[13])  # left_knee
+                        c = tuple(kp[15])  # left_ankle
+                        angle_left = compute_angle(a, b, c)
+                        angles.append(angle_left)
+                        a = tuple(kp[12])  # right_hip
+                        b = tuple(kp[14])  # right_knee
+                        c = tuple(kp[16])  # right_ankle
+                        angle_right = compute_angle(a, b, c)
+                        angles.append(angle_right)
+                    if angles:
+                        angle = float(np.mean(angles))
+                        timestamp = frame_idx / fps
+                        results.append((timestamp, angle))
+            frame_idx += 1
+        cap.release()
+        return results

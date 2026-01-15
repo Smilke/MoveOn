@@ -76,7 +76,7 @@ class ReportService:
         # Preparar detalhes das execuções
         from app.models.exercise_library import ExerciseLibrary
         from app.schemas.report import ExerciseLibraryBasic
-        
+
         execution_details = []
         for execution in executions:
             # Buscar exercício relacionado
@@ -90,7 +90,7 @@ class ReportService:
                         name=exercise_lib.name,
                         category=exercise_lib.category,
                     )
-            
+
             # Buscar níveis de dor
             from app.schemas.report import PainLevelDetail, FeedbackDetail
             pain_levels_statement = (
@@ -108,7 +108,7 @@ class ReportService:
                 )
                 for p in pain_levels_data
             ]
-            
+
             # Buscar feedbacks
             feedbacks_statement = (
                 select(Feedback)
@@ -125,7 +125,7 @@ class ReportService:
                 )
                 for f in feedbacks_data
             ]
-            
+
             execution_detail = ExerciseExecutionDetail(
                 id=execution.id,
                 execution_date=execution.execution_date,
@@ -139,14 +139,29 @@ class ReportService:
                 feedbacks=feedbacks,
             )
             execution_details.append(execution_detail)
-        
+
+        # Listar exercícios prescritos (ativos)
+        prescribed_exercises = []
+        seen_exercise_ids = set()
+        for prescription in prescriptions:
+            exercise_lib = session.get(ExerciseLibrary, prescription.exercise_id)
+            if exercise_lib and exercise_lib.id not in seen_exercise_ids:
+                prescribed_exercises.append(
+                    ExerciseLibraryBasic(
+                        id=exercise_lib.id,
+                        name=exercise_lib.name,
+                        category=exercise_lib.category,
+                    )
+                )
+                seen_exercise_ids.add(exercise_lib.id)
+
         # Calcular indicadores de progresso
         progress = ReportService._calculate_progress(
             session, executions, prescriptions, period_start, period_end
         )
-        
+
         has_data = len(executions) > 0
-        
+
         return ReportResponse(
             patient_id=patient.id,
             patient_name=patient.name,
@@ -156,6 +171,7 @@ class ReportService:
             executions=execution_details,
             progress=progress,
             has_data=has_data,
+            prescribed_exercises=prescribed_exercises,
         )
 
     @staticmethod
