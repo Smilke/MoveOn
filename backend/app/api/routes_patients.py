@@ -1,12 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from sqlmodel import Session, select
-from typing import List
+from typing import List, Optional
+from datetime import datetime
 
 from app.core.database import get_session
 from app.models.patient import Patient
-from app.services.prescription_service import PrescriptionService
 
 router = APIRouter()
+
+class PatientCreate(BaseModel):
+    name: str
+    email: str
+    cpf: str
+    physiotherapist_id: Optional[int] = None
 
 @router.get(
     "/patients",
@@ -48,12 +55,12 @@ def list_patients_for_physiotherapist(
     description="Cria um novo paciente no sistema"
 )
 def create_patient(
-    patient: Patient,
+    body: PatientCreate,
     session: Session = Depends(get_session)
 ):
     """Cria um novo paciente"""
     # Verificar se email já existe
-    statement = select(Patient).where(Patient.email == patient.email)
+    statement = select(Patient).where(Patient.email == body.email)
     existing = session.exec(statement).first()
     if existing:
         raise HTTPException(
@@ -61,10 +68,26 @@ def create_patient(
             detail="Email já cadastrado"
         )
     
-    session.add(patient)
+    # Verificar se CPF já existe
+    stmt_cpf = select(Patient).where(Patient.cpf == body.cpf)
+    existing_cpf = session.exec(stmt_cpf).first()
+    if existing_cpf:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="CPF já cadastrado"
+        )
+    
+    nuevo_paciente = Patient(
+        name=body.name,
+        email=body.email,
+        cpf=body.cpf,
+        physiotherapist_id=body.physiotherapist_id
+    )
+    
+    session.add(nuevo_paciente)
     session.commit()
-    session.refresh(patient)
-    return patient
+    session.refresh(nuevo_paciente)
+    return nuevo_paciente
 
 @router.get(
     "/patients/{patient_id}",

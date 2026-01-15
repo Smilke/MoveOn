@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Minhas Metas e Notificações - MoveOn</title>
+  <title>Minhas Metas - MoveOn</title>
   <style>
     body {
       margin: 0;
@@ -10,23 +11,28 @@
       background: #f3f4f6;
       color: #111827;
     }
+
     .page {
       max-width: 960px;
       margin: 40px auto;
       padding: 0 16px;
     }
+
     header {
       margin-bottom: 24px;
     }
+
     h1 {
       font-size: 1.7rem;
       margin: 0 0 4px;
     }
+
     p.sub {
       margin-top: 0;
       color: #6b7280;
       font-size: 0.9rem;
     }
+
     .top-row {
       display: flex;
       justify-content: space-between;
@@ -34,14 +40,17 @@
       gap: 12px;
       margin-bottom: 12px;
     }
+
     .top-link {
       font-size: 0.85rem;
       color: #4b5563;
       text-decoration: none;
     }
+
     .top-link:hover {
       text-decoration: underline;
     }
+
     .card {
       background: #ffffff;
       border-radius: 16px;
@@ -49,10 +58,12 @@
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
       margin-bottom: 20px;
     }
+
     label {
       font-size: 0.9rem;
       color: #374151;
     }
+
     input[type="text"] {
       padding: 6px 10px;
       border-radius: 8px;
@@ -60,7 +71,9 @@
       font-size: 0.9rem;
       width: 200px;
     }
-    .btn-primary, .btn-secondary {
+
+    .btn-primary,
+    .btn-secondary {
       display: inline-block;
       padding: 7px 14px;
       border-radius: 999px;
@@ -70,24 +83,30 @@
       cursor: pointer;
       text-decoration: none;
     }
+
     .btn-primary {
       background: #2563eb;
       color: #ffffff;
     }
+
     .btn-primary:hover {
       background: #1d4ed8;
     }
+
     .btn-secondary {
       background: #e5e7eb;
       color: #111827;
     }
+
     .btn-secondary:hover {
       background: #d1d5db;
     }
+
     h2 {
       font-size: 1.2rem;
       margin-top: 0;
     }
+
     .item {
       border: 1px solid #e5e7eb;
       border-radius: 10px;
@@ -96,29 +115,152 @@
       font-size: 0.9rem;
       background: #f9fafb;
     }
+
     select {
       padding: 4px 6px;
       border-radius: 6px;
       border: 1px solid #d1d5db;
       font-size: 0.85rem;
     }
+
+    /* Notificações no Header */
+    .notif-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .notif-bell {
+      background: #f3f4f6;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 999px;
+      transition: background 0.2s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #4b5563;
+    }
+
+    .notif-bell:hover {
+      background: #e5e7eb;
+    }
+
+    .notif-badge {
+      background: #ef4444;
+      color: white;
+      font-size: 0.7rem;
+      padding: 1px 5px;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .notif-popup {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 300px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+      display: none;
+      z-index: 1000;
+      max-height: 400px;
+      overflow: hidden;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .notif-popup.active {
+      display: flex;
+    }
+
+    .notif-header-pop {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 700;
+      background: #f9fafb;
+    }
+
+    .notif-list-pop {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .notif-item-pop {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .notif-item-pop:hover {
+      background: #f9fafb;
+    }
+
+    .notif-item-pop.unread {
+      background: #eff6ff;
+      border-left: 3px solid #3b82f6;
+    }
+
+    .notif-item-pop.read {
+      opacity: 0.7;
+    }
+
+    .notif-item-pop.unread .title {
+      font-weight: 700;
+    }
+
+    .notif-item-pop .date {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .notif-empty-pop {
+      padding: 20px;
+      text-align: center;
+      color: #9ca3af;
+    }
   </style>
 </head>
+
 <body>
   <div class="page">
     <header>
       <div class="top-row">
         <a href="/paciente_area" class="top-link">← Voltar para a área do paciente</a>
+
+        <div class="notif-container">
+          <button class="notif-bell" onclick="toggleNotificacoes()">
+            <span>🔔</span>
+            <span id="notif-count" class="notif-badge" style="display:none">0</span>
+          </button>
+          <div id="notif-popup" class="notif-popup">
+            <div class="notif-header-pop">Notificações</div>
+            <div id="notif-list-pop" class="notif-list-pop">
+              <div class="notif-empty-pop">Carregando...</div>
+            </div>
+          </div>
+        </div>
       </div>
       <h1>Minhas metas</h1>
-      <p class="sub">Consulte as metas definidas pelo seu fisioterapeuta e veja as notificações relacionadas.</p>
+      <p class="sub">Consulte as metas definidas pelo seu fisioterapeuta.</p>
     </header>
 
     <section class="card">
-      <label for="pacienteId">Paciente ID (CPF): </label>
-      <input type="text" id="pacienteId" value="12345678901" />
+      <div id="paciente-id-display" style="margin-bottom: 10px; font-weight: bold; display: none;">
+        Paciente: <span id="nome-paciente-display"></span>
+      </div>
+      <div id="input-paciente-id">
+        <label for="pacienteId">Paciente ID (CPF): </label>
+        <input type="text" id="pacienteId" value="" />
+      </div>
       <button class="btn-primary" onclick="carregarMetas()">Carregar metas</button>
-      <button class="btn-secondary" onclick="carregarNotificacoes()">Carregar notificações</button>
     </section>
 
     <section class="card">
@@ -126,19 +268,30 @@
       <div id="listaMetas"></div>
     </section>
 
-    <section class="card">
-      <h2>Notificações</h2>
-      <div id="listaNotificacoes"></div>
-    </section>
   </div>
 
   <script>
     window.API_BASE = window.API_BASE || "http://127.0.0.1:8000/api";
     var API_BASE = window.API_BASE;
 
+    const usuario = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
+
     function getPacienteId() {
-      return document.getElementById("pacienteId").value.trim();
+      const inputVal = document.getElementById("pacienteId").value.trim();
+      if (inputVal) return inputVal;
+      if (usuario && usuario.tipo === "paciente") return usuario.id || usuario.cpf;
+      return null;
     }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (usuario && usuario.tipo === "paciente") {
+        document.getElementById("input-paciente-id").style.display = "none";
+        document.getElementById("paciente-id-display").style.display = "block";
+        document.getElementById("nome-paciente-display").textContent = usuario.nome;
+        carregarMetas();
+      }
+    });
+
 
     // -------- METAS --------
 
@@ -175,19 +328,18 @@
 
           div.innerHTML = `
             <div><strong>ID:</strong> ${meta.id}</div>
-            <div><strong>Descrição:</strong> ${meta.descricao || ""}</div>
+            <div><strong>Descrição:</strong> ${meta.description || ""}</div>
             <div><strong>Status atual:</strong> ${meta.status}</div>
             <div style="margin-top: 6px;">
               <label for="${selectId}">Novo status: </label>
               <select id="${selectId}">
                 ${statusOptions
-                  .map(
-                    (s) =>
-                      `<option value="${s}" ${
-                        s === meta.status ? "selected" : ""
-                      }>${s}</option>`
-                  )
-                  .join("")}
+              .map(
+                (s) =>
+                  `<option value="${s}" ${s === meta.status ? "selected" : ""
+                  }>${s}</option>`
+              )
+              .join("")}
               </select>
               <button class="btn-primary" style="margin-left: 4px;"
                 onclick="atualizarStatusMeta(${meta.id})">
@@ -242,69 +394,114 @@
         }
 
         await carregarMetas();
-        await carregarNotificacoes();
       } catch (err) {
         console.error("Erro inesperado ao atualizar meta:", err);
         alert("Erro ao atualizar meta (veja o console).");
       }
     }
 
-    // -------- NOTIFICAÇÕES --------
 
-    async function carregarNotificacoes() {
-      const pacienteId = getPacienteId();
-      if (!pacienteId) {
-        alert("Informe o CPF do paciente.");
-        return;
-      }
+    // -------- NOTIFICAÇÕES (POPUP SININHO) --------
+    let notifAberta = false;
 
-      try {
-        const resp = await fetch(
-          `${API_BASE}/pacientes/${pacienteId}/notificacoes`
-        );
-        if (!resp.ok) {
-          console.error("Erro ao buscar notificações:", resp.status);
-          alert("Erro ao buscar notificações (veja o console).");
-          return;
-        }
-
-        const notificacoes = await resp.json();
-        const container = document.getElementById("listaNotificacoes");
-        container.innerHTML = "";
-
-        if (!Array.isArray(notificacoes) || notificacoes.length === 0) {
-          container.innerText = "Nenhuma notificação.";
-          return;
-        }
-
-        notificacoes.forEach((noti) => {
-          const div = document.createElement("div");
-          div.className = "item";
-
-          div.innerHTML = `
-            <strong>${noti.tipo || "Notificação"}</strong>
-            - ${noti.data_hora || ""}<br>
-            ${noti.mensagem || JSON.stringify(noti)}
-          `;
-
-          container.appendChild(div);
-        });
-      } catch (err) {
-        console.error("Erro inesperado ao carregar notificações:", err);
-        alert("Erro ao carregar notificações (veja o console).");
+    function toggleNotificacoes() {
+      notifAberta = !notifAberta;
+      const popup = document.getElementById("notif-popup");
+      if (notifAberta) {
+        popup.classList.add("active");
+        carregarNotificacoesSininho();
+      } else {
+        popup.classList.remove("active");
       }
     }
+
+    document.addEventListener("click", (e) => {
+      const container = document.querySelector(".notif-container");
+      if (notifAberta && !container.contains(e.target)) {
+        toggleNotificacoes();
+      }
+    });
+
+    async function carregarNotificacoesSininho() {
+      const listEl = document.getElementById("notif-list-pop");
+      const countEl = document.getElementById("notif-count");
+      const pacienteId = getPacienteId();
+      if (!pacienteId) return;
+
+      try {
+        const resp = await fetch(`${API_BASE}/pacientes/${pacienteId}/notificacoes`);
+        const data = await resp.json();
+
+        if (!resp.ok) return;
+
+        if (data.length === 0) {
+          listEl.innerHTML = '<div class="notif-empty-pop">Nenhuma notificação por enquanto.</div>';
+          countEl.style.display = "none";
+          return;
+        }
+
+        // Contar apenas não lidas
+        const unreadCount = data.filter(n => !n.lida).length;
+        if (unreadCount > 0) {
+          countEl.textContent = unreadCount;
+          countEl.style.display = "block";
+        } else {
+          countEl.style.display = "none";
+        }
+
+        listEl.innerHTML = "";
+        data.forEach(n => {
+          const item = document.createElement("div");
+          item.className = `notif-item-pop ${n.lida ? 'read' : 'unread'}`;
+
+          let dataFormatada = "";
+          try {
+            dataFormatada = new Date(n.data_hora).toLocaleString('pt-BR');
+          } catch (e) { dataFormatada = n.data_hora; }
+
+          item.innerHTML = `
+                    <div class="title">${n.tipo.replace(/_/g, ' ').toUpperCase()}</div>
+                    <div class="text">${n.mensagem}</div>
+                    <div class="date">${dataFormatada}</div>
+                `;
+
+          item.onclick = async () => {
+            if (!n.lida) {
+              await marcarComoLida(n.id);
+              carregarNotificacoesSininho();
+            }
+          };
+
+          listEl.appendChild(item);
+        });
+
+      } catch (e) {
+        console.error("Erro ao carregar notificações sininho:", e);
+      }
+    }
+
+    async function marcarComoLida(id) {
+      try {
+        await fetch(`${API_BASE}/notificacoes/${id}/lida`, { method: "PATCH" });
+      } catch (e) {
+        console.error("Erro ao marcar como lida:", e);
+      }
+    }
+
+    // Carregar contagem inicial
+    setTimeout(carregarNotificacoesSininho, 500);
   </script>
   <script>
-    (function(){
-      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+    (function () {
+      document.querySelectorAll('a[href$=".html"]').forEach(a => {
         const href = a.getAttribute('href');
         if (!href.match(/^https?:\/\//)) {
-          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
-          a.setAttribute('href','/' + p);
+          const p = href.replace(/^(?:\.\/|\/)*/, '').replace(/\.html$/, '');
+          a.setAttribute('href', '/' + p);
         }
       });
     })();
   </script>
 </body>
+
 </html>

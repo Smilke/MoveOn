@@ -4,6 +4,8 @@ from app.models.prescription import Prescription
 from app.models.exercise_library import ExerciseLibrary
 from app.models.patient import Patient
 from app.schemas.prescription import PrescriptionCreate, PrescriptionUpdate
+from app.api.routes_notificacoes import repo_notificacoes
+from notificacoes import registrar_notificacao
 
 
 class PrescriptionService:
@@ -18,21 +20,32 @@ class PrescriptionService:
         # Verificar se o exercício existe
         exercise = session.get(ExerciseLibrary, prescription_data.exercise_id)
         if not exercise:
-            raise ValueError(f"Exercício com ID {prescription_data.exercise_id} não encontrado")
+            raise ValueError(f"Exercício com ID {prescription_data.exercise_id} n encontrado")
         
         if not exercise.is_active:
-            raise ValueError("Exercício não está ativo")
+            raise ValueError("Exercício n está ativo")
         
         # Verificar se o paciente existe
         patient = session.get(Patient, prescription_data.patient_id)
         if not patient:
-            raise ValueError(f"Paciente com ID {prescription_data.patient_id} não encontrado")
+            raise ValueError(f"Paciente com ID {prescription_data.patient_id} n encontrado")
         
         # Criar prescrição
         prescription = Prescription(**prescription_data.model_dump())
         session.add(prescription)
         session.commit()
         session.refresh(prescription)
+
+        # Registrar Notificação
+        try:
+            registrar_notificacao(
+                repo_notificacoes,
+                paciente_id=str(patient.id),
+                tipo="nova_prescricao",
+                mensagem=f"Seu fisioterapeuta prescreveu um novo exercício: {exercise.name}."
+            )
+        except Exception as e:
+            print(f"Erro ao registrar notificação de prescrição: {e}")
         
         return prescription
 

@@ -18,3 +18,4 @@ class Physiotherapist(SQLModel, table=True):
     # Relacionamentos
     patients: List["Patient"] = Relationship(back_populates="physiotherapist")
     prescriptions: List["Prescription"] = Relationship(back_populates="physiotherapist")
+    goals: List["Goal"] = Relationship(back_populates="physiotherapist")

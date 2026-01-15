@@ -30,7 +30,7 @@ def seed():
         patient = session.exec(stmt_pat).first()
         if not patient:
             print("Creating default patient...")
-            patient = Patient(name="Paciente Teste", email="paciente@moveon.com")
+            patient = Patient(name="Paciente Teste", email="paciente@moveon.com", cpf="12345678901")
             session.add(patient)
             session.commit()
             print("Done! Patient login: paciente@moveon.com / (Login with email only)")

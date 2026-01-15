@@ -17,7 +17,12 @@
       <h1>Prescrever exercício</h1>
       <p class="sub">Selecione um exercício e defina os parâmetros para o paciente.</p>
 
-      <div class="hint">
+      <div id="patient-info-display"
+        style="margin-bottom: 20px; font-weight: 600; color: #1e40af; background: #eff6ff; padding: 12px; border-radius: 8px; display: none;">
+        Paciente: <span id="patient-name-display">Carregando...</span>
+      </div>
+
+      <div class="hint" id="patient-input-container">
         <input type="text" id="patient-id-input" placeholder="ID do paciente">
       </div>
 
@@ -291,12 +296,12 @@
     });
   </script>
   <script>
-    (function(){
-      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+    (function () {
+      document.querySelectorAll('a[href$=".html"]').forEach(a => {
         const href = a.getAttribute('href');
         if (!href.match(/^https?:\/\//)) {
-          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
-          a.setAttribute('href','/' + p);
+          const p = href.replace(/^(?:\.\/|\/)*/, '').replace(/\.html$/, '');
+          a.setAttribute('href', '/' + p);
         }
       });
     })();
