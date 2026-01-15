@@ -20,10 +20,10 @@
 
             <!-- Filtros de Período -->
             <div class="row-actions" style="margin-bottom: 20px;">
-                <button onclick="carregarRelatorio('last_week')" class="btn btn-secondary btn-small">Última
+                <button onclick="carregarRelatorio('last_week', this)" class="btn btn-secondary btn-small">Última
                     Semana</button>
-                <button onclick="carregarRelatorio('last_month')" class="btn btn-small">Último Mês</button>
-                <button onclick="carregarRelatorio('last_3_months')" class="btn btn-secondary btn-small">3
+                <button onclick="carregarRelatorio('last_month', this)" class="btn btn-small">Último Mês</button>
+                <button onclick="carregarRelatorio('last_3_months', this)" class="btn btn-secondary btn-small">3
                     Meses</button>
             </div>
 
@@ -51,8 +51,14 @@
                 <canvas id="chartProgresso"></canvas>
             </div>
 
+            <div style="margin-top: 10px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                <h3>Feedback automático (vídeo enviado pelo paciente)</h3>
+                <div id="videos-status" style="font-size:0.9rem; color:#6b7280; margin-top:6px;">Carregando vídeos...</div>
+                <div id="lista-videos" style="margin-top: 10px;"></div>
+            </div>
+
             <!-- Histórico de Execuções -->
-            <h3>Histórico de Execuções</h3>
+            <h3 style="margin-top:24px;">Execuções (dados)</h3>
             <table style="margin-top: 10px;">
                 <thead>
                     <tr>
@@ -60,7 +66,7 @@
                         <th>Exercício</th>
                         <th>Status</th>
                         <th>Dor</th>
-                        <th>Feedback</th>
+                        <th>Comentário do fisioterapeuta</th>
                     </tr>
                 </thead>
                 <tbody id="lista-execucoes">
@@ -69,12 +75,6 @@
                     </tr>
                 </tbody>
             </table>
-
-            <div style="margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-                <h3>Vídeos enviados e análise</h3>
-                <div id="videos-status" style="font-size:0.9rem; color:#6b7280; margin-top:6px;">Carregando vídeos...</div>
-                <div id="lista-videos" style="margin-top: 10px;"></div>
-            </div>
         </div>
     </div>
 
@@ -92,20 +92,30 @@
             window.location.href = "/fisio_area";
         }
 
-        async function carregarRelatorio(periodo) {
-            // Atualizar botões visualmente (simples)
+        let periodoSelecionado = 'last_month';
+        let refreshTimer = null;
+
+        function atualizarBotoesPeriodo(botaoAtivo) {
             document.querySelectorAll('.row-actions button').forEach(b => {
                 b.classList.remove('btn');
                 b.classList.add('btn-secondary');
             });
-            event.target.classList.remove('btn-secondary');
-            event.target.classList.add('btn');
+            if (botaoAtivo) {
+                botaoAtivo.classList.remove('btn-secondary');
+                botaoAtivo.classList.add('btn');
+            }
+        }
+
+        async function carregarRelatorio(periodo, botaoAtivo) {
+            // manter estado de período e destacar botão quando houver
+            if (periodo) periodoSelecionado = periodo;
+            atualizarBotoesPeriodo(botaoAtivo);
 
             const tbody = document.getElementById("lista-execucoes");
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">Buscando dados...</td></tr>`;
 
             try {
-                const resp = await fetch(`${API_BASE}/patients/${patientId}/reports?period_filter=${periodo}`);
+                const resp = await fetch(`${API_BASE}/patients/${patientId}/reports?period_filter=${periodoSelecionado}`);
                 const data = await resp.json();
 
                 if (!resp.ok) {
@@ -135,8 +145,10 @@
                     // Dor (pegar a maior ou média, aqui pegando a primeira se houver)
                     const dor = exec.pain_levels.length > 0 ? exec.pain_levels[0].pain_level : "-";
 
-                    // Feedback
-                    const fb = exec.feedbacks.length > 0 ? exec.feedbacks[0].content : "-";
+                                        // Comentário do fisioterapeuta (mostrar o mais recente)
+                                        const fbList = Array.isArray(exec.feedbacks) ? exec.feedbacks : [];
+                                        const lastFb = fbList.length > 0 ? fbList[0] : null;
+                                        const fbText = lastFb && lastFb.content ? lastFb.content : "-";
 
                     tbody.innerHTML += `
                         <tr>
@@ -144,17 +156,100 @@
                             <td>${exerciseName}</td>
                             <td>${exec.was_completed ? '<span class="badge badge-green">Concluído</span>' : '<span class="badge badge-gray">Incompleto</span>'}</td>
                             <td>${dor}</td>
-                            <td style="font-size:0.85rem; color:#64748b; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${fb}</td>
+                                                        <td style="font-size:0.85rem; color:#64748b; max-width: 260px;">
+                                                            <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${fbText}">${fbText}</div>
+                                                            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                                                                <select id="fb-type-${exec.id}" class="btn btn-secondary btn-small" style="padding:6px 10px;">
+                                                                    <option value="neutral">Neutro</option>
+                                                                    <option value="positive">Positivo</option>
+                                                                    <option value="negative">Negativo</option>
+                                                                </select>
+                                                                <button class="btn btn-small" onclick="toggleFeedbackForm(${exec.id})">Adicionar feedback</button>
+                                                            </div>
+                                                            <div id="fb-form-${exec.id}" style="display:none; margin-top:8px;">
+                                                                <textarea id="fb-text-${exec.id}" rows="3" style="width:100%; resize:vertical" placeholder="Escreva o feedback para o paciente..."></textarea>
+                                                                <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                                                                    <button class="btn btn-small" onclick="salvarFeedback(${exec.id})">Salvar</button>
+                                                                    <button class="btn btn-secondary btn-small" onclick="toggleFeedbackForm(${exec.id}, true)">Cancelar</button>
+                                                                </div>
+                                                                <div id="fb-msg-${exec.id}" style="margin-top:6px; font-size:0.85rem; color:#6b7280;"></div>
+                                                            </div>
+                                                        </td>
                         </tr>
                     `;
                 });
 
-                // Carregar vídeos/feedbacks (independente do relatório)
-                carregarVideosFeedback();
+                                // Carregar feedback automático do vídeo (independente do relatório)
+                                carregarVideosFeedback();
 
             } catch (e) {
                 console.error(e);
                 tbody.innerHTML = `<tr><td colspan="5">Erro de conexão</td></tr>`;
+            }
+        }
+
+        function iniciarAutoRefresh() {
+            // Atualiza continuamente enquanto a aba estiver visível
+            if (refreshTimer) clearInterval(refreshTimer);
+            refreshTimer = setInterval(() => {
+                if (document.visibilityState !== 'visible') return;
+                carregarRelatorio(null, null);
+            }, 15000);
+        }
+
+        function toggleFeedbackForm(executionId, forceHide) {
+            const el = document.getElementById(`fb-form-${executionId}`);
+            if (!el) return;
+            if (forceHide) {
+                el.style.display = 'none';
+                return;
+            }
+            el.style.display = (el.style.display === 'none' || !el.style.display) ? 'block' : 'none';
+        }
+
+        async function salvarFeedback(executionId) {
+            const msgEl = document.getElementById(`fb-msg-${executionId}`);
+            const textEl = document.getElementById(`fb-text-${executionId}`);
+            const typeEl = document.getElementById(`fb-type-${executionId}`);
+
+            if (!fisio || fisio.tipo !== "fisioterapeuta" || !fisio.id) {
+                if (msgEl) msgEl.textContent = "Faça login como fisioterapeuta.";
+                return;
+            }
+            const content = (textEl && textEl.value) ? textEl.value.trim() : "";
+            const feedbackType = (typeEl && typeEl.value) ? typeEl.value : "neutral";
+
+            if (!content) {
+                if (msgEl) msgEl.textContent = "Escreva um feedback antes de salvar.";
+                return;
+            }
+
+            if (msgEl) msgEl.textContent = "Salvando...";
+
+            try {
+                const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/executions/${executionId}/feedbacks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        feedback_type: feedbackType,
+                        content: content,
+                    })
+                });
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    if (msgEl) msgEl.textContent = (data && data.detail) ? data.detail : "Erro ao salvar feedback.";
+                    return;
+                }
+
+                if (msgEl) msgEl.textContent = "Feedback salvo.";
+                if (textEl) textEl.value = "";
+                toggleFeedbackForm(executionId, true);
+                // Recarregar para mostrar no relatório imediatamente
+                carregarRelatorio(null, null);
+            } catch (e) {
+                console.error(e);
+                if (msgEl) msgEl.textContent = "Erro de conexão ao salvar feedback.";
             }
         }
 
@@ -163,7 +258,7 @@
             const listEl = document.getElementById("lista-videos");
 
             if (!fisio || fisio.tipo !== "fisioterapeuta" || !fisio.id) {
-                statusEl.textContent = "Faça login como fisioterapeuta para ver vídeos.";
+                statusEl.textContent = "Faça login como fisioterapeuta para ver o feedback automático.";
                 listEl.innerHTML = "";
                 return;
             }
@@ -265,8 +360,18 @@
 
         // Carregar inicial
         document.addEventListener("DOMContentLoaded", () => {
-            carregarRelatorio('last_month');
+            // Seleciona o botão de "Último Mês" como ativo no load
+            const btnMes = document.querySelector('.row-actions button:nth-child(2)');
+            carregarRelatorio('last_month', btnMes);
             carregarVideosFeedback();
+            iniciarAutoRefresh();
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            // Ao voltar para a aba, puxa na hora (sem esperar 15s)
+            if (document.visibilityState === 'visible') {
+                carregarRelatorio(null, null);
+            }
         });
     </script>
     <script>

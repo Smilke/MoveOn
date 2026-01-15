@@ -41,9 +41,7 @@
             </div>
 
             <div id="content-exercise" style="display:none">
-                <div class="video-placeholder">
-                    📺 Video/Demonstração
-                </div>
+                <div id="ex-video-wrap" class="video-placeholder">📺 Video/Demonstração</div>
 
                 <span id="ex-category" class="badge badge-blue">Categoria</span>
                 <h1 id="ex-name" style="margin-top:10px">Nome do Exercício</h1>
@@ -131,6 +129,21 @@
                 }
 
                 prescriptionData = data;
+
+                                // Vídeo de exemplo do exercício
+                                const videoWrap = document.getElementById("ex-video-wrap");
+                                if (data.exercise && data.exercise.example_video_url) {
+                                        const videoUrl = `${API_BASE}${data.exercise.example_video_url}`;
+                                        videoWrap.className = "";
+                                        videoWrap.style.marginBottom = "20px";
+                                        videoWrap.innerHTML = `
+                                            <video controls style="width:100%; border-radius:12px; background:#000" src="${videoUrl}"></video>
+                                            <div style="margin-top:6px; font-size:0.85rem; color:#6b7280;">Vídeo de exemplo</div>
+                                        `;
+                                } else {
+                                        videoWrap.className = "video-placeholder";
+                                        videoWrap.textContent = "📺 Video/Demonstração";
+                                }
 
                 // Preencher tela
                 document.getElementById("ex-name").textContent = data.exercise.name;

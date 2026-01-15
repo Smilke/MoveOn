@@ -54,7 +54,7 @@
       </div>
 
       <div class="row-actions">
-        <button class="btn" onclick="prescrever()">Prescrever</button>
+        <button class="btn" id="btn-salvar" onclick="salvarPrescricao()">Prescrever</button>
         <button class="btn btn-secondary" onclick="carregarExercicios()">Recarregar exercícios</button>
       </div>
 
@@ -121,7 +121,7 @@
     async function prescrever() {
       setMsg("", "");
 
-      const patientId = Number(document.getElementById("patient-id-input").value); 7
+      const patientId = Number(document.getElementById("patient-id-input").value);
       console.log(patientId);
       if (!patientId) {
         setMsg("Patient_id não encontrado na URL. Volte e clique em 'Prescrever exercícios' no paciente.", "err");
@@ -185,9 +185,109 @@
       }
     }
 
+    async function atualizarPrescricao(prescriptionId) {
+      setMsg("", "");
+
+      const fisio = usuarioLogado();
+      if (!fisio || fisio.tipo !== "fisioterapeuta") {
+        setMsg("Faça login como fisioterapeuta para editar.", "err");
+        return;
+      }
+
+      const patientId = Number(document.getElementById("patient-id-input").value);
+      const exerciseId = Number(document.getElementById("exerciseSelect").value);
+      const repetitions = Number(document.getElementById("repetitions").value);
+      const series = Number(document.getElementById("series").value);
+      const duration = document.getElementById("duration").value.trim();
+      const weekly = Number(document.getElementById("weekly").value);
+      const notes = document.getElementById("notes").value.trim();
+
+      if (!patientId) { setMsg("ID do paciente inválido.", "err"); return; }
+      if (!exerciseId) { setMsg("Selecione um exercício.", "err"); return; }
+      if (!repetitions || repetitions < 1) { setMsg("Repetições inválidas.", "err"); return; }
+      if (!series || series < 1) { setMsg("Séries inválidas.", "err"); return; }
+      if (!weekly || weekly < 1) { setMsg("Frequência semanal inválida.", "err"); return; }
+
+      const body = {
+        exercise_id: exerciseId,
+        repetitions: repetitions,
+        series: series,
+        duration_minutes: duration ? Number(duration) : null,
+        weekly_frequency: weekly,
+        notes: notes || null,
+      };
+
+      try {
+        const resp = await fetch(`${API_BASE}/prescriptions/${prescriptionId}?physiotherapist_id=${fisio.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          setMsg((data && data.detail) ? data.detail : "Erro ao atualizar prescrição.", "err");
+          return;
+        }
+
+        setMsg("Prescrição atualizada com sucesso! ✅", "ok");
+      } catch (e) {
+        console.error(e);
+        setMsg("Erro inesperado ao atualizar (veja o console).", "err");
+      }
+    }
+
+    async function carregarPrescricaoParaEdicao(prescriptionId) {
+      try {
+        const resp = await fetch(`${API_BASE}/prescriptions/${prescriptionId}`);
+        const data = await resp.json();
+        if (!resp.ok) {
+          setMsg((data && data.detail) ? data.detail : "Erro ao carregar prescrição.", "err");
+          return;
+        }
+
+        document.getElementById("patient-id-input").value = data.patient_id;
+        document.getElementById("patient-id-input").disabled = true;
+        document.getElementById("repetitions").value = data.repetitions;
+        document.getElementById("series").value = data.series;
+        document.getElementById("duration").value = data.duration_minutes || "";
+        document.getElementById("weekly").value = data.weekly_frequency;
+        document.getElementById("notes").value = data.notes || "";
+
+        // aguarda carregarExercicios para setar o select
+        const interval = setInterval(() => {
+          const select = document.getElementById("exerciseSelect");
+          if (select && select.options && select.options.length > 0) {
+            select.value = String(data.exercise_id);
+            clearInterval(interval);
+          }
+        }, 100);
+
+        const btn = document.getElementById("btn-salvar");
+        if (btn) btn.textContent = "Salvar alterações";
+      } catch (e) {
+        console.error(e);
+        setMsg("Erro ao carregar prescrição para edição.", "err");
+      }
+    }
+
+    async function salvarPrescricao() {
+      const prescriptionId = getQueryParam("prescription_id");
+      if (prescriptionId) {
+        return atualizarPrescricao(prescriptionId);
+      }
+      return prescrever();
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       const patientId = getQueryParam("patient_id");
+      if (patientId) document.getElementById("patient-id-input").value = patientId;
       carregarExercicios();
+
+      const prescriptionId = getQueryParam("prescription_id");
+      if (prescriptionId) {
+        carregarPrescricaoParaEdicao(prescriptionId);
+      }
     });
   </script>
   <script>

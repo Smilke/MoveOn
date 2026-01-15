@@ -79,7 +79,7 @@
     async function carregarPacientes() {
       const tbody = document.getElementById("lista-pacientes");
       try {
-        const resp = await fetch(`${API_BASE}/patients`);
+        const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients`);
         const data = await resp.json();
 
         if (!resp.ok) {
@@ -102,14 +102,263 @@
                         <td style="text-align:right">
                             <a href="/prescricao_exercicio?patient_id=${p.id}" class="btn btn-small">Prescrever</a>
                             <a href="/relatorio_paciente?patient_id=${p.id}" class="btn btn-secondary btn-small">Relatório</a>
+                            <button class="btn btn-secondary btn-small" onclick="togglePrescricoes(${p.id})">Prescrições</button>
                         </td>
                     `;
           tbody.appendChild(tr);
+
+          const trPrescs = document.createElement("tr");
+          trPrescs.id = `prescs-row-${p.id}`;
+          trPrescs.style.display = "none";
+          trPrescs.innerHTML = `
+                        <td colspan="4">
+                          <div id="prescs-${p.id}" class="hint">Carregando prescrições...</div>
+                          <div style="margin-top:16px; border-top:1px solid #e5e7eb; padding-top:14px;">
+                            <h3 style="font-size: 1rem; color: #4b5563; margin:0">Vídeos enviados e análise</h3>
+                            <div id="videos-status-${p.id}" style="font-size:0.9rem; color:#6b7280; margin-top:6px;">Carregando vídeos...</div>
+                            <div id="lista-videos-${p.id}" style="margin-top: 10px;"></div>
+                          </div>
+                        </td>
+                    `;
+          tbody.appendChild(trPrescs);
         });
 
       } catch (e) {
         console.error(e);
         tbody.innerHTML = `<tr><td colspan="4">Erro de conexão</td></tr>`;
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    async function togglePrescricoes(patientId) {
+      const row = document.getElementById(`prescs-row-${patientId}`);
+      if (!row) return;
+
+      const isHidden = row.style.display === "none" || row.style.display === "";
+      if (isHidden) {
+        row.style.display = "";
+        await carregarPrescricoes(patientId);
+      } else {
+        row.style.display = "none";
+      }
+    }
+
+    async function carregarPrescricoes(patientId) {
+      const box = document.getElementById(`prescs-${patientId}`);
+      if (!box) return;
+
+      box.innerHTML = "Carregando prescrições...";
+
+      try {
+        const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/prescriptions?active_only=false`);
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          const msg = (data && (data.detail || data.message)) ? (data.detail || data.message) : "Erro ao carregar prescrições";
+          box.innerHTML = `<div class="msg err">${escapeHtml(msg)}</div>`;
+          return;
+        }
+
+        if (!Array.isArray(data) || data.length === 0) {
+          box.innerHTML = `<div class="msg">Nenhuma prescrição encontrada para este paciente.</div>`;
+          return;
+        }
+
+        const items = data.map(pr => {
+          const exerciseName = pr.exercise && pr.exercise.name ? pr.exercise.name : `Exercício #${pr.exercise_id}`;
+          const badge = pr.is_active
+            ? `<span class="badge badge-green">Ativa</span>`
+            : `<span class="badge badge-gray">Desativada</span>`;
+
+          const details = `Reps: ${pr.repetitions} • Séries: ${pr.series} • ${pr.weekly_frequency}x/sem`;
+          const notes = pr.notes ? `<div style="margin-top:6px; color:#4b5563; font-size:0.9rem;">Obs: ${escapeHtml(pr.notes)}</div>` : "";
+
+          const btnDesativar = pr.is_active
+            ? `<button class="btn btn-secondary btn-small" onclick="desativarPrescricao(${patientId}, ${pr.id})">Desativar</button>`
+            : "";
+
+          const btnReativar = (!pr.is_active)
+            ? `<button class="btn btn-secondary btn-small" onclick="reativarPrescricao(${patientId}, ${pr.id})">Reativar</button>`
+            : "";
+
+          const btnRemover = `<button class="btn btn-secondary btn-small" onclick="removerPrescricao(${patientId}, ${pr.id})">Remover</button>`;
+          const btnEditar = `<a class="btn btn-secondary btn-small" href="/prescricao_exercicio?patient_id=${patientId}&prescription_id=${pr.id}">Editar</a>`;
+
+          return `
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid #e5e7eb;">
+              <div>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                  <strong>${escapeHtml(exerciseName)}</strong>
+                  ${badge}
+                </div>
+                <div style="margin-top:6px; color:#4b5563; font-size:0.9rem;">${escapeHtml(details)}</div>
+                ${notes}
+              </div>
+              <div class="btn-group">
+                ${btnDesativar}${btnReativar}${btnRemover}${btnEditar}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        box.innerHTML = `<div>${items}</div>`;
+
+        // carregar vídeos do paciente na mesma área
+        carregarVideosPaciente(patientId);
+      } catch (e) {
+        console.error(e);
+        box.innerHTML = `<div class="msg err">Erro de conexão ao carregar prescrições.</div>`;
+      }
+    }
+
+    async function carregarVideosPaciente(patientId) {
+      const statusEl = document.getElementById(`videos-status-${patientId}`);
+      const listEl = document.getElementById(`lista-videos-${patientId}`);
+      if (!statusEl || !listEl) return;
+
+      statusEl.textContent = 'Carregando vídeos...';
+      listEl.innerHTML = '';
+
+      try {
+        const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/video-feedbacks`);
+        if (!resp.ok) {
+          statusEl.textContent = 'Não foi possível carregar os vídeos (sem acesso ou erro).';
+          return;
+        }
+        const data = await resp.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          statusEl.textContent = 'Nenhum vídeo enviado ainda.';
+          return;
+        }
+
+        statusEl.textContent = '';
+        data.forEach((fb) => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.boxShadow = 'none';
+          card.style.border = '1px solid #e5e7eb';
+          card.style.marginBottom = '10px';
+
+          const ts = fb.timestamp ? new Date(fb.timestamp).toLocaleString('pt-BR') : 'data desconhecida';
+          const obs = Array.isArray(fb.observacoes) && fb.observacoes.length
+            ? `<ul style='margin:6px 0 0 0; padding-left:18px; color:#374151; font-size:0.93em'>${fb.observacoes.map(o=>`<li>${escapeHtml(o)}</li>`).join('')}</ul>`
+            : '';
+          const detalhes = Array.isArray(fb.detalhes) && fb.detalhes.length
+            ? `<details style='margin-top:6px'><summary>Detalhes das repetições</summary><ul style='margin:4px 0 0 0; padding-left:18px; color:#374151; font-size:0.92em'>${fb.detalhes.map(rep => `<li>Rep ${rep.rep_index}: ${escapeHtml(rep.note)} (Ângulo: ${rep.min_angle?.toFixed?.(1) ?? rep.min_angle}° - ${rep.max_angle?.toFixed?.(1) ?? rep.max_angle}°)</li>`).join('')}</ul></details>`
+            : '';
+
+          let videoHtml = '';
+          if (fb.video_filename) {
+            const videoUrl = `${API_BASE}/videos/${encodeURIComponent(fb.video_filename)}`;
+            videoHtml = `
+              <div style='margin-top:10px'>
+                <video controls style='width:100%; max-height:320px; border-radius:12px; background:#111827' src='${videoUrl}'></video>
+                <div style='margin-top:6px; font-size:0.85rem'>
+                  <a href='${videoUrl}' target='_blank' rel='noopener'>Baixar/abrir vídeo</a>
+                </div>
+              </div>
+            `;
+          } else {
+            videoHtml = `<div style='margin-top:10px; font-size:0.9rem; color:#6b7280'>Vídeo não disponível (log antigo sem referência ao arquivo).</div>`;
+          }
+
+          card.innerHTML = `
+            <div style='font-size:0.95rem; color:#0369a1; margin-bottom:4px'><b>${escapeHtml(fb.exercise_name || `Exercício ID: ${fb.exercise_id || "?"}`)}</b> (${escapeHtml(ts)})</div>
+            <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Status:</b> ${escapeHtml(fb.status || '-')}</div>
+            <div style='font-size:0.95rem; color:#374151; margin-bottom:4px'><b>Repetições detectadas:</b> ${fb.repeticoes ?? '-'}</div>
+            ${obs}
+            ${detalhes}
+            ${videoHtml}
+          `;
+
+          listEl.appendChild(card);
+        });
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = 'Erro de conexão ao carregar vídeos.';
+      }
+    }
+
+    async function desativarPrescricao(patientId, prescriptionId) {
+      const box = document.getElementById(`prescs-${patientId}`);
+      if (box) box.innerHTML = "Desativando prescrição...";
+
+      try {
+        const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/prescriptions/${prescriptionId}`, {
+          method: "DELETE",
+        });
+
+        let data = null;
+        try { data = await resp.json(); } catch (e) { /* ignore */ }
+
+        if (!resp.ok) {
+          const msg = data && (data.detail || data.message) ? (data.detail || data.message) : "Erro ao remover prescrição";
+          if (box) box.innerHTML = `<div class="msg err">${escapeHtml(msg)}</div>`;
+          return;
+        }
+
+        await carregarPrescricoes(patientId);
+      } catch (e) {
+        console.error(e);
+        if (box) box.innerHTML = `<div class="msg err">Erro de conexão ao remover prescrição.</div>`;
+      }
+    }
+
+    async function reativarPrescricao(patientId, prescriptionId) {
+      const box = document.getElementById(`prescs-${patientId}`);
+      if (box) box.innerHTML = "Reativando prescrição...";
+
+      try {
+        const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/prescriptions/${prescriptionId}/reactivate`, {
+          method: "PATCH",
+        });
+
+        let data = null;
+        try { data = await resp.json(); } catch (e) { /* ignore */ }
+
+        if (!resp.ok) {
+          const msg = data && (data.detail || data.message) ? (data.detail || data.message) : "Erro ao reativar prescrição";
+          if (box) box.innerHTML = `<div class="msg err">${escapeHtml(msg)}</div>`;
+          return;
+        }
+
+        await carregarPrescricoes(patientId);
+      } catch (e) {
+        console.error(e);
+        if (box) box.innerHTML = `<div class="msg err">Erro de conexão ao reativar prescrição.</div>`;
+      }
+    }
+
+    async function removerPrescricao(patientId, prescriptionId) {
+      const box = document.getElementById(`prescs-${patientId}`);
+      if (box) box.innerHTML = "Removendo prescrição...";
+
+      try {
+        const resp = await fetch(`${API_BASE}/physiotherapists/${fisio.id}/patients/${patientId}/prescriptions/${prescriptionId}/permanent`, {
+          method: "DELETE",
+        });
+
+        let data = null;
+        try { data = await resp.json(); } catch (e) { /* ignore */ }
+
+        if (!resp.ok) {
+          const msg = data && (data.detail || data.message) ? (data.detail || data.message) : "Erro ao remover prescrição";
+          if (box) box.innerHTML = `<div class="msg err">${escapeHtml(msg)}</div>`;
+          return;
+        }
+
+        await carregarPrescricoes(patientId);
+      } catch (e) {
+        console.error(e);
+        if (box) box.innerHTML = `<div class="msg err">Erro de conexão ao remover prescrição.</div>`;
       }
     }
 

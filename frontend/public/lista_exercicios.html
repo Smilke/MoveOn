@@ -25,11 +25,12 @@
                         <th>Nome</th>
                         <th>Categoria</th>
                         <th>Dificuldade</th>
+                        <th style="text-align:right">Ações</th>
                     </tr>
                 </thead>
                 <tbody id="lista-exercicios">
                     <tr>
-                        <td colspan="3" style="text-align:center">Carregando...</td>
+                        <td colspan="4" style="text-align:center">Carregando...</td>
                     </tr>
                 </tbody>
             </table>
@@ -40,8 +41,9 @@
     <div id="modal-exercicio"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center;">
         <div class="card" style="width: 500px; max-width:90%;">
-            <h2>Novo Exercício</h2>
+            <h2 id="modal-titulo">Novo Exercício</h2>
             <div class="grid">
+                <input type="hidden" id="ex-id">
                 <div class="full">
                     <label>Nome do Exercício</label>
                     <input type="text" id="ex-nome">
@@ -63,8 +65,15 @@
                     </select>
                 </div>
                 <div class="full">
-                    <button class="btn" onclick="criarExercicio()">Salvar</button>
-                    <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                    <label>Vídeo de exemplo (opcional)</label>
+                    <input type="file" id="ex-video" accept="video/*">
+                    <div id="ex-video-atual" style="margin-top:6px; font-size:0.85rem; color:#6b7280;"></div>
+                </div>
+                <div class="full">
+                    <div class="row-actions" style="margin-top:0">
+                        <button class="btn" onclick="salvarExercicio()">Salvar</button>
+                        <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,12 +90,12 @@
                 const data = await resp.json();
 
                 if (!resp.ok) {
-                    tbody.innerHTML = `<tr><td colspan="3">Erro ao carregar</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4">Erro ao carregar</td></tr>`;
                     return;
                 }
 
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center">Nenhum exercício cadastrado.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center">Nenhum exercício cadastrado.</td></tr>`;
                     return;
                 }
 
@@ -102,6 +111,10 @@
                     const diffMap = { beginner: "Iniciante", intermediate: "Intermediário", advanced: "Avançado" };
                     const diffLabel = diffMap[ex.difficulty] || ex.difficulty;
 
+                    const videoLink = ex.example_video_url
+                        ? `<a href="${API_BASE}${ex.example_video_url}" target="_blank" class="btn btn-secondary btn-small">Vídeo</a>`
+                        : ``;
+
                     tr.innerHTML = `
                         <td>
                             <b>${ex.name}</b><br>
@@ -109,6 +122,13 @@
                         </td>
                         <td>${ex.category || "-"}</td>
                         <td><span class="badge ${badgeClass}">${diffLabel}</span></td>
+                        <td style="text-align:right">
+                            <div class="btn-group">
+                                ${videoLink}
+                                <button class="btn btn-secondary btn-small" onclick="abrirModalEditarById(${ex.id})">Editar</button>
+                                <button class="btn btn-secondary btn-small" onclick="removerExercicio(${ex.id})">Remover</button>
+                            </div>
+                        </td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -119,37 +139,116 @@
         }
 
         function abrirModalExercicio() {
+            limparModal();
             document.getElementById("modal-exercicio").style.display = "flex";
         }
+
+        async function abrirModalEditarById(exerciseId) {
+            limparModal();
+            try {
+                const resp = await fetch(`${API_BASE}/exercises/${exerciseId}`);
+                const ex = await resp.json();
+                if (!resp.ok) {
+                    alert("Erro ao carregar exercício");
+                    return;
+                }
+
+                document.getElementById("modal-titulo").textContent = "Editar Exercício";
+                document.getElementById("ex-id").value = ex.id;
+                document.getElementById("ex-nome").value = ex.name || "";
+                document.getElementById("ex-desc").value = ex.description || "";
+                document.getElementById("ex-cat").value = ex.category || "";
+                document.getElementById("ex-diff").value = ex.difficulty || "beginner";
+
+                const videoAtual = document.getElementById("ex-video-atual");
+                if (ex.example_video_url) {
+                    videoAtual.innerHTML = `Vídeo atual: <a href="${API_BASE}${ex.example_video_url}" target="_blank">abrir</a>`;
+                } else {
+                    videoAtual.textContent = "";
+                }
+
+                document.getElementById("modal-exercicio").style.display = "flex";
+            } catch (e) {
+                console.error(e);
+                alert("Erro de conexão ao carregar exercício");
+            }
+        }
+
         function fecharModal() {
             document.getElementById("modal-exercicio").style.display = "none";
         }
 
-        async function criarExercicio() {
+        function limparModal() {
+            document.getElementById("modal-titulo").textContent = "Novo Exercício";
+            document.getElementById("ex-id").value = "";
+            document.getElementById("ex-nome").value = "";
+            document.getElementById("ex-desc").value = "";
+            document.getElementById("ex-cat").value = "";
+            document.getElementById("ex-diff").value = "beginner";
+            document.getElementById("ex-video").value = "";
+            document.getElementById("ex-video-atual").textContent = "";
+        }
+
+        async function salvarExercicio() {
             const name = document.getElementById("ex-nome").value;
             const description = document.getElementById("ex-desc").value;
             const category = document.getElementById("ex-cat").value;
             const difficulty = document.getElementById("ex-diff").value;
+            const id = document.getElementById("ex-id").value;
+            const video = document.getElementById("ex-video").files[0];
 
             if (!name) return alert("Nome é obrigatório");
 
             try {
-                const resp = await fetch(`${API_BASE}/exercises`, {
-                    method: "POST",
+                const url = id ? `${API_BASE}/exercises/${id}` : `${API_BASE}/exercises`;
+                const method = id ? "PUT" : "POST";
+
+                const resp = await fetch(url, {
+                    method,
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ name, description, category, difficulty })
                 });
 
                 if (resp.ok) {
-                    alert("Exercício criado!");
-                    document.getElementById("ex-nome").value = "";
-                    document.getElementById("ex-desc").value = "";
+                    const data = await resp.json().catch(() => null);
+                    const exercise = data && data.exercise ? data.exercise : null;
+                    const exerciseId = exercise ? exercise.id : Number(id);
+
+                    if (video && exerciseId) {
+                        const fd = new FormData();
+                        fd.append("file", video);
+                        const up = await fetch(`${API_BASE}/exercises/${exerciseId}/example-video`, {
+                            method: "POST",
+                            body: fd,
+                        });
+                        if (!up.ok) {
+                            const err = await up.json().catch(() => ({}));
+                            alert("Exercício salvo, mas falhou ao enviar vídeo: " + (err.detail || "erro"));
+                        }
+                    }
+
+                    alert(id ? "Exercício atualizado!" : "Exercício criado!");
                     fecharModal();
                     carregarExercicios();
                 } else {
                     const err = await resp.json();
                     alert("Erro: " + (err.detail || "Desconhecido"));
                 }
+            } catch (e) {
+                alert("Erro de conexão");
+            }
+        }
+
+        async function removerExercicio(exerciseId) {
+            if (!confirm("Remover este exercício? Ele não aparecerá mais para prescrição.")) return;
+            try {
+                const resp = await fetch(`${API_BASE}/exercises/${exerciseId}`, { method: "DELETE" });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) {
+                    alert("Erro: " + (data.detail || "Não foi possível remover"));
+                    return;
+                }
+                carregarExercicios();
             } catch (e) {
                 alert("Erro de conexão");
             }
