@@ -5,6 +5,119 @@
   <meta charset="UTF-8">
   <title>Minha Área - MoveOn</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .notif-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .notif-bell {
+      background: #f3f4f6;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 999px;
+      transition: background 0.2s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #4b5563;
+      font-weight: 500;
+    }
+
+    .notif-bell:hover {
+      background: #e5e7eb;
+    }
+
+    .notif-badge {
+      background: #ef4444;
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .notif-popup {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: 320px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      border: 1px solid #e5e7eb;
+      display: none;
+      z-index: 1000;
+      max-height: 450px;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    .notif-popup.active {
+      display: flex;
+    }
+
+    .notif-header {
+      padding: 16px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 700;
+      background: #f9fafb;
+      font-size: 1rem;
+    }
+
+    .notif-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .notif-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 0.9rem;
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    .notif-item:hover {
+      background: #f9fafb;
+    }
+
+    .notif-item.unread {
+      background: #eff6ff;
+      /* Fundo levemente azul para não lidas */
+      border-left: 4px solid #3b82f6;
+    }
+
+    .notif-item.read {
+      opacity: 0.7;
+    }
+
+    .notif-item.unread .title {
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .notif-item .text {
+      color: #4b5563;
+      line-height: 1.4;
+    }
+
+    .notif-item .date {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin-top: 6px;
+    }
+
+    .notif-empty {
+      padding: 40px 20px;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+  </style>
 </head>
 
 <body>
@@ -15,8 +128,28 @@
           <h1>Olá, <span id="nome-paciente">Paciente</span> 👋</h1>
           <p class="sub">Bem-vindo ao seu painel de reabilitação</p>
         </div>
-        <div class="row-actions" style="margin-top:0">
+        <div class="row-actions" style="margin-top:0; display: flex; align-items: center; gap: 10px;">
+          <div class="notif-container">
+            <button class="notif-bell" onclick="toggleNotificacoes()">
+              <span>🔔</span>
+              <span id="notif-count" class="notif-badge" style="display:none">0</span>
+            </button>
+            <div id="notif-popup" class="notif-popup">
+              <div class="notif-header">Notificações</div>
+              <div id="notif-list" class="notif-list">
+                <div class="notif-empty">Carregando...</div>
+              </div>
+            </div>
+          </div>
+          <a href="/paciente_metas" class="btn btn-secondary btn-small">🎯 Minhas Metas</a>
           <button onclick="logout()" class="btn btn-secondary btn-small">Sair</button>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px;">
+        <h2 style="font-size: 1.2rem; margin-bottom: 15px;">Minhas Metas</h2>
+        <div id="lista-metas-resumo" class="grid">
+          <div style="text-align:center; padding: 20px; color: #6b7280;" class="full">Carregando metas...</div>
         </div>
       </div>
 
@@ -38,10 +171,12 @@
       <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
         <h3 style="font-size: 1rem; color: #4b5563;">Feedback dos Vídeos Enviados</h3>
         <div id="feedback-videos" style="margin-top: 10px;">
-          <div id="feedback-videos-status" style="font-size: 0.9rem; color: #f59e42; display:none; align-items:center; gap:8px; margin-bottom:8px;">
+          <div id="feedback-videos-status"
+            style="font-size: 0.9rem; color: #f59e42; display:none; align-items:center; gap:8px; margin-bottom:8px;">
             <span style="font-size:1.2em">⏳</span> Seu vídeo está sendo analisado, o feedback aparecerá aqui em breve.
           </div>
-          <div id="feedback-videos-none" style="font-size: 0.9rem; color: #9ca3af; display:none;">Nenhum vídeo pendente ou feedback encontrado.</div>
+          <div id="feedback-videos-none" style="font-size: 0.9rem; color: #9ca3af; display:none;">Nenhum vídeo pendente
+            ou feedback encontrado.</div>
         </div>
       </div>
     </div>
@@ -142,7 +277,56 @@
       carregarExercicios();
       carregarHistorico();
       carregarFeedbackVideos();
+      carregarMetasResumo();
     });
+
+    async function carregarMetasResumo() {
+      const container = document.getElementById("lista-metas-resumo");
+      try {
+        const resp = await fetch(`${API_BASE}/pacientes/${usuario.id}/metas`);
+        const data = await resp.json();
+
+        if (!resp.ok) {
+          container.innerHTML = `<div class="full msg err">Erro ao carregar metas</div>`;
+          return;
+        }
+
+        if (data.length === 0) {
+          container.innerHTML = `<div class="full hint">Você não tem metas definidas no momento.</div>`;
+          return;
+        }
+
+        container.innerHTML = "";
+        // Mostrar apenas as 3 primeiras metas ativas ou em andamento
+        const metasFiltradas = data.filter(m => m.status === 'ativa' || m.status === 'em_andamento').slice(0, 3);
+
+        if (metasFiltradas.length === 0) {
+          container.innerHTML = `<div class="full hint">Nenhuma meta ativa no momento.</div>`;
+          return;
+        }
+
+        metasFiltradas.forEach(m => {
+          const el = document.createElement("div");
+          el.className = "card";
+          el.style.boxShadow = "none";
+          el.style.border = "1px solid #e5e7eb";
+          el.style.padding = "15px";
+          el.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <div>
+                            <h3 style="margin:0; font-size:1rem">${m.description}</h3>
+                            <p style="font-size:0.85rem; color:#6b7280; margin:4px 0">Status: <b>${m.status}</b></p>
+                        </div>
+                        <a href="/paciente_metas" class="btn btn-secondary btn-small">Ver mais</a>
+                    </div>
+                `;
+          container.appendChild(el);
+        });
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div class="full msg err">Erro de conexão</div>`;
+      }
+    }
 
     async function carregarFeedbackVideos() {
       const container = document.getElementById("feedback-videos");
@@ -151,7 +335,6 @@
       statusDiv.style.display = "none";
       noneDiv.style.display = "none";
       try {
-        // Endpoint sugerido: /api/patients/{id}/video-feedbacks
         const resp = await fetch(`${API_BASE}/patients/${usuario.id}/video-feedbacks`);
         if (!resp.ok) {
           container.innerHTML = `<div class=\"msg err\">Erro ao carregar feedbacks de vídeo</div>`;
@@ -159,12 +342,10 @@
         }
         const data = await resp.json();
         if (!data.length) {
-          // Nenhum feedback, nenhum vídeo pendente
           statusDiv.style.display = "none";
           noneDiv.style.display = "block";
           return;
         }
-        // Considera pendente quando ainda não há sinal de análise concluída
         let pendente = false;
         data.forEach(fb => {
           const status = (fb.status || "").toLowerCase();
@@ -181,14 +362,13 @@
           statusDiv.style.display = "none";
         }
         noneDiv.style.display = "none";
-        container.querySelectorAll('.card').forEach(e=>e.remove());
+        container.querySelectorAll('.card').forEach(e => e.remove());
         data.forEach(fb => {
           const div = document.createElement("div");
           div.className = "card";
           div.style.boxShadow = "none";
           div.style.border = "1px solid #e5e7eb";
           div.style.marginBottom = "10px";
-          // Montar detalhes do feedback
           let obsHtml = '';
           if (fb.observacoes && fb.observacoes.length) {
             obsHtml = `<ul style='margin:6px 0 0 0; padding-left:18px; color:#374151; font-size:0.93em'>` +
@@ -228,6 +408,96 @@
         container.innerHTML = `<div class=\"msg err\">Erro de conexão ao buscar feedbacks</div>`;
       }
     }
+
+    // -------- NOTIFICAÇÕES (Sininho) --------
+    let notifAberta = false;
+
+    function toggleNotificacoes() {
+      notifAberta = !notifAberta;
+      const popup = document.getElementById("notif-popup");
+      if (notifAberta) {
+        popup.classList.add("active");
+        carregarNotificacoesSininho();
+      } else {
+        popup.classList.remove("active");
+      }
+    }
+
+    // Fechar popup ao clicar fora
+    document.addEventListener("click", (e) => {
+      const container = document.querySelector(".notif-container");
+      if (notifAberta && !container.contains(e.target)) {
+        toggleNotificacoes();
+      }
+    });
+
+    async function carregarNotificacoesSininho() {
+      const listEl = document.getElementById("notif-list");
+      const countEl = document.getElementById("notif-count");
+
+      try {
+        const resp = await fetch(`${API_BASE}/pacientes/${usuario.id}/notificacoes`);
+        const data = await resp.json();
+
+        if (!resp.ok) return;
+
+        if (data.length === 0) {
+          listEl.innerHTML = '<div class="notif-empty">Nenhuma notificação por enquanto.</div>';
+          countEl.style.display = "none";
+          return;
+        }
+
+        // Contar apenas não lidas
+        const unreadCount = data.filter(n => !n.lida).length;
+        if (unreadCount > 0) {
+          countEl.textContent = unreadCount;
+          countEl.style.display = "block";
+        } else {
+          countEl.style.display = "none";
+        }
+
+        listEl.innerHTML = "";
+        data.forEach(n => {
+          const item = document.createElement("div");
+          item.className = `notif-item ${n.lida ? 'read' : 'unread'}`;
+
+          // Formatar data
+          let dataFormatada = "";
+          try {
+            dataFormatada = new Date(n.data_hora).toLocaleString('pt-BR');
+          } catch (e) { dataFormatada = n.data_hora; }
+
+          item.innerHTML = `
+                    <div class="title">${n.tipo.replace(/_/g, ' ').toUpperCase()}</div>
+                    <div class="text">${n.mensagem}</div>
+                    <div class="date">${dataFormatada}</div>
+                `;
+
+          item.onclick = async () => {
+            if (!n.lida) {
+              await marcarComoLida(n.id);
+              carregarNotificacoesSininho();
+            }
+          };
+
+          listEl.appendChild(item);
+        });
+
+      } catch (e) {
+        console.error("Erro ao carregar notificações:", e);
+      }
+    }
+
+    async function marcarComoLida(id) {
+      try {
+        await fetch(`${API_BASE}/notificacoes/${id}/lida`, { method: "PATCH" });
+      } catch (e) {
+        console.error("Erro ao marcar como lida:", e);
+      }
+    }
+
+    // Carregar contagem inicial
+    setTimeout(carregarNotificacoesSininho, 500);
   </script>
 </body>
 

@@ -59,6 +59,19 @@ class RepositorioNotificacaoMemoria:
             if n.get("paciente_id") == paciente_id
         ]
 
+    def obter_por_id(self, notificacao_id: int):
+        for n in self._notificacoes:
+            if n.get("id") == notificacao_id:
+                return n
+        return None
+
+    def marcar_lida(self, notificacao_id: int):
+        for n in self._notificacoes:
+            if n.get("id") == notificacao_id:
+                n["lida"] = True
+                return n
+        return None
+
 
 class RepositorioMetaMemoria:
     def __init__(self):

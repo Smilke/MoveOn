@@ -30,6 +30,7 @@
           <tr>
             <th width="50">ID</th>
             <th>Nome</th>
+            <th>CPF</th>
             <th>Email</th>
             <th style="text-align:right">Ações</th>
           </tr>
@@ -58,6 +59,10 @@
         <div class="full">
           <label>Email</label>
           <input type="email" id="novo-email">
+        </div>
+        <div class="full">
+          <label>CPF</label>
+          <input type="text" id="novo-cpf" placeholder="Somente números">
         </div>
         <div class="full">
           <button class="btn" onclick="criarPaciente()">Salvar</button>
@@ -98,9 +103,11 @@
           tr.innerHTML = `
                         <td>#${p.id}</td>
                         <td>${p.name}</td>
+                        <td style="font-family: monospace;">${p.cpf || '-'}</td>
                         <td>${p.email}</td>
                         <td style="text-align:right">
                             <a href="/prescricao_exercicio?patient_id=${p.id}" class="btn btn-small">Prescrever</a>
+                            <a href="/fisio_metas?patient_id=${p.id}" class="btn btn-secondary btn-small">Metas</a>
                             <a href="/relatorio_paciente?patient_id=${p.id}" class="btn btn-secondary btn-small">Relatório</a>
                         </td>
                     `;
@@ -123,13 +130,13 @@
     async function criarPaciente() {
       const name = document.getElementById("novo-nome").value;
       const email = document.getElementById("novo-email").value;
+      const cpf = document.getElementById("novo-cpf").value;
 
-      if (!name || !email) return alert("Preencha nome e email");
+      if (!name || !email || !cpf) return alert("Preencha nome, email e CPF");
 
       try {
-        // Attach physiotherapist id when creating patient from fisioterapeuta UI
         const fisio = JSON.parse(localStorage.getItem("moveon_usuario_logado") || "null");
-        const payload = { name, email };
+        const payload = { name, email, cpf };
         if (fisio && fisio.tipo === 'fisioterapeuta' && fisio.id) payload.physiotherapist_id = fisio.id;
 
         const resp = await fetch(`${API_BASE}/patients`, {
@@ -148,7 +155,7 @@
           try {
             const err = await resp.json();
             errText = err.detail || JSON.stringify(err);
-          } catch(e) {
+          } catch (e) {
             errText = await resp.text();
           }
           alert("Erro: " + errText);
@@ -167,12 +174,12 @@
     document.addEventListener("DOMContentLoaded", carregarPacientes);
   </script>
   <script>
-    (function(){
-      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+    (function () {
+      document.querySelectorAll('a[href$=".html"]').forEach(a => {
         const href = a.getAttribute('href');
         if (!href.match(/^https?:\/\//)) {
-          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
-          a.setAttribute('href','/' + p);
+          const p = href.replace(/^(?:\.\/|\/)*/, '').replace(/\.html$/, '');
+          a.setAttribute('href', '/' + p);
         }
       });
     })();

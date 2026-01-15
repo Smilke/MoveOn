@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, create_engine, Session
 from app.core.config import settings
-from app.models import patient, physiotherapist, exercise_library, prescription, exercise_execution, pain_level, feedback
+from app.models import patient, physiotherapist, exercise_library, prescription, exercise_execution, pain_level, feedback, goal
 
 # Url de conexão com o banco de dados
 # Se não estiver definido em settings, usa um arquivo local por padrão
@@ -32,5 +32,6 @@ def create_db_and_tables():
     from app.models.exercise_execution import ExerciseExecution
     from app.models.feedback import Feedback
     from app.models.pain_level import PainLevel
+    from app.models.goal import Goal
     
     SQLModel.metadata.create_all(engine)

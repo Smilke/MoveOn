@@ -5,11 +5,12 @@ from repositorio_memoria import RepositorioNotificacaoMemoria
 from notificacoes import (
     registrar_notificacao,
     listar_notificacoes_paciente,
+    marcar_notificacao_lida,
 )
 
 router = APIRouter()
 
-repo_notificacoes = RepositorioNotificacaoMemoria()
+from repositorio_memoria import repo_notificacao_memoria as repo_notificacoes
 
 
 class NotificacaoIn(BaseModel):
@@ -41,3 +42,17 @@ def listar_notificacoes(paciente_id: str):
     """
     notificacoes = listar_notificacoes_paciente(repo_notificacoes, paciente_id)
     return notificacoes
+
+
+@router.patch("/notificacoes/{notificacao_id}/lida")
+def marcar_como_lida(notificacao_id: int):
+    """
+    Marca uma notificação como lida.
+    """
+    notificacao = marcar_notificacao_lida(repo_notificacoes, notificacao_id)
+    if not notificacao:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Notificação não encontrada"
+        )
+    return notificacao

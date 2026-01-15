@@ -9,6 +9,7 @@ class Patient(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=255)
+    cpf: str = Field(max_length=11, unique=True, index=True)
     email: str = Field(max_length=255, unique=True, index=True)
     phone: Optional[str] = Field(default=None, max_length=20)
     birth_date: Optional[datetime] = Field(default=None)
@@ -20,3 +21,4 @@ class Patient(SQLModel, table=True):
     physiotherapist: Optional["Physiotherapist"] = Relationship(back_populates="patients")
     prescriptions: List["Prescription"] = Relationship(back_populates="patient")
     exercise_executions: List["ExerciseExecution"] = Relationship(back_populates="patient")
+    goals: List["Goal"] = Relationship(back_populates="patient")

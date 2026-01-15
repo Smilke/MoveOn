@@ -30,3 +30,10 @@ def listar_notificacoes_paciente(repo, paciente_id: str):
     )
 
     return notificacoes_ordenadas
+
+
+def marcar_notificacao_lida(repo, notificacao_id: int):
+    """
+    Marca uma notificação como lida no repositório.
+    """
+    return repo.marcar_lida(notificacao_id)

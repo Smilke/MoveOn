@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <title>Metas dos Pacientes - MoveOn</title>
@@ -10,38 +11,46 @@
       background: #f3f4f6;
       color: #111827;
     }
+
     .page {
       max-width: 960px;
       margin: 40px auto;
       padding: 0 16px 80px;
     }
+
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 32px;
     }
+
     h1 {
       font-size: 1.8rem;
       margin: 0 0 4px 0;
     }
+
     p.sub {
       margin: 0;
       color: #6b7280;
       font-size: 0.95rem;
     }
+
     .auth-info {
       text-align: right;
       font-size: 0.9rem;
     }
+
     .auth-info span.status {
       color: #6b7280;
       display: block;
     }
+
     .auth-info span.nome {
       font-weight: 600;
       display: block;
     }
+
     .btn-sair {
       margin-top: 6px;
       padding: 6px 12px;
@@ -52,6 +61,7 @@
       font-size: 0.8rem;
       cursor: pointer;
     }
+
     .btn-sair:hover {
       background: #fecaca;
     }
@@ -61,6 +71,7 @@
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
       gap: 24px;
     }
+
     @media (max-width: 900px) {
       .layout {
         grid-template-columns: 1fr;
@@ -73,11 +84,13 @@
       padding: 24px;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
     }
+
     .card h2 {
       margin-top: 0;
       margin-bottom: 8px;
       font-size: 1.3rem;
     }
+
     .card p {
       margin-top: 0;
       margin-bottom: 16px;
@@ -92,7 +105,10 @@
       font-size: 0.9rem;
       color: #374151;
     }
-    input, textarea, select {
+
+    input,
+    textarea,
+    select {
       width: 100%;
       margin-top: 4px;
       padding: 9px 11px;
@@ -101,11 +117,15 @@
       font-size: 0.95rem;
       box-sizing: border-box;
     }
+
     textarea {
       resize: vertical;
       min-height: 60px;
     }
-    input:focus, textarea:focus, select:focus {
+
+    input:focus,
+    textarea:focus,
+    select:focus {
       outline: none;
       border-color: #2563eb;
       box-shadow: 0 0 0 1px #2563eb33;
@@ -123,6 +143,7 @@
       font-size: 0.95rem;
       cursor: pointer;
     }
+
     .btn-primary:hover {
       background: #1d4ed8;
     }
@@ -132,13 +153,16 @@
       color: #4b5563;
       margin-top: 8px;
     }
+
     .meta-item {
       padding: 8px 0;
       border-bottom: 1px solid #e5e7eb;
     }
+
     .meta-item:last-child {
       border-bottom: none;
     }
+
     .meta-status {
       display: inline-block;
       margin-top: 4px;
@@ -153,8 +177,14 @@
       font-size: 0.9rem;
       margin-top: 8px;
     }
-    .msg.err { color: #dc2626; }
-    .msg.ok  { color: #16a34a; }
+
+    .msg.err {
+      color: #dc2626;
+    }
+
+    .msg.ok {
+      color: #16a34a;
+    }
 
     .top-link {
       font-size: 0.85rem;
@@ -163,6 +193,7 @@
       display: inline-block;
       margin-bottom: 12px;
     }
+
     .top-link:hover {
       text-decoration: underline;
     }
@@ -175,6 +206,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="page">
     <header>
@@ -199,18 +231,21 @@
         <h2>Cadastrar nova meta</h2>
         <p>Preencha os dados abaixo para criar uma meta para um paciente.</p>
 
-        <label for="pacienteId">CPF do paciente</label>
-        <input type="text" id="pacienteId" placeholder="Somente números" />
+        <div id="patient-info-display"
+          style="margin-bottom: 20px; font-weight: 600; color: #1e40af; background: #eff6ff; padding: 12px; border-radius: 8px; display: none;">
+          Paciente: <span id="patient-name-display">Carregando...</span>
+        </div>
+
+        <div id="patient-input-container">
+          <label for="pacienteId">CPF ou ID do paciente</label>
+          <input type="text" id="pacienteId" placeholder="Somente números" />
+        </div>
 
         <label for="descricao">Descrição da meta</label>
         <textarea id="descricao" placeholder="Ex.: Realizar exercícios 5x por semana."></textarea>
 
         <label for="criterio">Critério de sucesso</label>
-        <input
-          type="text"
-          id="criterio"
-          placeholder="Ex.: Manter média de dor &le; 3 em 4 semanas."
-        />
+        <input type="text" id="criterio" placeholder="Ex.: Manter média de dor &le; 3 em 4 semanas." />
 
         <label for="dataInicio">Data de início</label>
         <input type="date" id="dataInicio" />
@@ -311,12 +346,12 @@
 
       // corpo exatamente como o Swagger mostrou
       const body = {
-        paciente_id: pacienteId,
-        fisioterapeuta_id: usuario.cpf,  // fisio logado
-        descricao: descricao,
-        criterio_sucesso: criterio,
-        data_inicio: dataInicio,
-        data_fim: dataFim
+        patient_id: pacienteId,
+        physiotherapist_id: usuario.id,  // ID do fisio logado
+        description: descricao,
+        success_criteria: criterio,
+        start_date: dataInicio,
+        end_date: dataFim
       };
 
       try {
@@ -387,9 +422,9 @@
           const div = document.createElement("div");
           div.className = "meta-item";
           div.innerHTML = `
-            <strong>${m.descricao || "Meta"}</strong><br>
-            Critério: ${m.criterio_sucesso || "-"}<br>
-            Período: ${m.data_inicio || "-"} até ${m.data_fim || "-"}<br>
+            <strong>${m.description || "Meta"}</strong><br>
+            Critério: ${m.success_criteria || "-"}<br>
+            Período: ${m.start_date || "-"} até ${m.end_date || "-"}<br>
             <span class="meta-status">${m.status || "sem status"}</span>
           `;
           listaEl.appendChild(div);
@@ -402,20 +437,42 @@
       }
     }
 
+    async function carregarDadosPaciente(idOrCpf) {
+      if (!idOrCpf) return;
+      try {
+        const resp = await fetch(`${API_BASE}/patients/${idOrCpf}`);
+        if (resp.ok) {
+          const p = await resp.json();
+          document.getElementById("patient-name-display").textContent = p.name;
+          document.getElementById("patient-info-display").style.display = "block";
+          document.getElementById("patient-input-container").style.display = "none";
+        }
+      } catch (e) { console.error(e); }
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       atualizarHeader();
+
+      const params = new URLSearchParams(window.location.search);
+      const pid = params.get("patient_id");
+      if (pid) {
+        document.getElementById("pacienteId").value = pid;
+        carregarMetas();
+        carregarDadosPaciente(pid);
+      }
     });
   </script>
   <script>
-    (function(){
-      document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+    (function () {
+      document.querySelectorAll('a[href$=".html"]').forEach(a => {
         const href = a.getAttribute('href');
         if (!href.match(/^https?:\/\//)) {
-          const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
-          a.setAttribute('href','/' + p);
+          const p = href.replace(/^(?:\.\/|\/)*/, '').replace(/\.html$/, '');
+          a.setAttribute('href', '/' + p);
         }
       });
     })();
   </script>
 </body>
+
 </html>

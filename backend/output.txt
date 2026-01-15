@@ -1,0 +1,7 @@
+﻿Exception: 3 validation errors:
+  {'type': 'missing', 'loc': ('response', 'paciente_id'), 'msg': 'Field required', 'input': Goal(id=4, description='Teste', status='ativa', end_date=datetime.datetime(2026, 2, 15, 0, 0), updated_at=datetime.datetime(2026, 1, 15, 18, 2, 21, 214874), patient_id=1, physiotherapist_id=1, success_criteria='Criterio', start_date=datetime.datetime(2026, 1, 15, 0, 0), created_at=datetime.datetime(2026, 1, 15, 18, 2, 21, 214730))}
+  {'type': 'missing', 'loc': ('response', 'fisioterapeuta_id'), 'msg': 'Field required', 'input': Goal(id=4, description='Teste', status='ativa', end_date=datetime.datetime(2026, 2, 15, 0, 0), updated_at=datetime.datetime(2026, 1, 15, 18, 2, 21, 214874), patient_id=1, physiotherapist_id=1, success_criteria='Criterio', start_date=datetime.datetime(2026, 1, 15, 0, 0), created_at=datetime.datetime(2026, 1, 15, 18, 2, 21, 214730))}
+  {'type': 'missing', 'loc': ('response', 'descricao'), 'msg': 'Field required', 'input': Goal(id=4, description='Teste', status='ativa', end_date=datetime.datetime(2026, 2, 15, 0, 0), updated_at=datetime.datetime(2026, 1, 15, 18, 2, 21, 214874), patient_id=1, physiotherapist_id=1, success_criteria='Criterio', start_date=datetime.datetime(2026, 1, 15, 0, 0), created_at=datetime.datetime(2026, 1, 15, 18, 2, 21, 214730))}
+
+  File "C:\Users\User\Documents\softex\MoveOn\backend\app\api\routes_metas.py", line 38, in criar_meta
+    POST /api/metas
