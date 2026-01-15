@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório do Paciente - MoveOn</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="page">
+        <div class="card">
+            <div class="top">
+                <a class="back" href="fisio_area.html">← Voltar para pacientes</a>
+            </div>
+
+            <h1>Relatório de Progresso</h1>
+            <p class="sub" id="p-name">Carregando dados do paciente...</p>
+
+            <!-- Filtros de Período -->
+            <div class="row-actions" style="margin-bottom: 20px;">
+                <button onclick="carregarRelatorio('last_week')" class="btn btn-secondary btn-small">Última
+                    Semana</button>
+                <button onclick="carregarRelatorio('last_month')" class="btn btn-small">Último Mês</button>
+                <button onclick="carregarRelatorio('last_3_months')" class="btn btn-secondary btn-small">3
+                    Meses</button>
+            </div>
+
+            <!-- Cards de Resumo -->
+            <div class="grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 24px;">
+                <div class="card"
+                    style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+                    <span style="display:block; font-size: 0.85rem; color: #64748b;">Aderência</span>
+                    <strong style="font-size: 1.4rem; color: #0f172a;" id="stat-aderencia">-%</strong>
+                </div>
+                <div class="card"
+                    style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+                    <span style="display:block; font-size: 0.85rem; color: #64748b;">Dor Média</span>
+                    <strong style="font-size: 1.4rem; color: #0f172a;" id="stat-dor">-</strong>
+                </div>
+                <div class="card"
+                    style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; text-align: center;">
+                    <span style="display:block; font-size: 0.85rem; color: #64748b;">Conclusão</span>
+                    <strong style="font-size: 1.4rem; color: #0f172a;" id="stat-conclusao">-%</strong>
+                </div>
+            </div>
+
+            <!-- Gráfico (Placeholder) -->
+            <div style="height: 250px; margin-bottom: 24px;">
+                <canvas id="chartProgresso"></canvas>
+            </div>
+
+            <!-- Histórico de Execuções -->
+            <h3>Histórico de Execuções</h3>
+            <table style="margin-top: 10px;">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Exercício</th>
+                        <th>Status</th>
+                        <th>Dor</th>
+                        <th>Feedback</th>
+                    </tr>
+                </thead>
+                <tbody id="lista-execucoes">
+                    <tr>
+                        <td colspan="5" style="text-align:center">Selecione um período...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8000/api";
+        const urlParams = new URLSearchParams(window.location.search);
+        const patientId = urlParams.get("patient_id");
+        let chartInstance = null;
+
+        if (!patientId) {
+            alert("Paciente não especificado");
+            window.location.href = "fisio_area.html";
+        }
+
+        async function carregarRelatorio(periodo) {
+            // Atualizar botões visualmente (simples)
+            document.querySelectorAll('.row-actions button').forEach(b => {
+                b.classList.remove('btn');
+                b.classList.add('btn-secondary');
+            });
+            event.target.classList.remove('btn-secondary');
+            event.target.classList.add('btn');
+
+            const tbody = document.getElementById("lista-execucoes");
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">Buscando dados...</td></tr>`;
+
+            try {
+                const resp = await fetch(`${API_BASE}/patients/${patientId}/reports?period_filter=${periodo}`);
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    tbody.innerHTML = `<tr><td colspan="5">Erro ao carregar relatório</td></tr>`;
+                    return;
+                }
+
+                document.getElementById("p-name").textContent = `Paciente: ${data.patient_name || "Desconhecido"}`;
+
+                // Atualizar Stats
+                document.getElementById("stat-aderencia").textContent = (data.progress.adherence_rate || 0) + "%";
+                document.getElementById("stat-dor").textContent = (data.progress.pain_level_avg || "-");
+                document.getElementById("stat-conclusao").textContent = (data.progress.completion_rate_avg || 0) + "%";
+
+                renderizarGrafico(data.executions);
+
+                if (!data.has_data || data.executions.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 30px; color: #64748b">Nenhuma atividade registrada neste período.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = "";
+                data.executions.forEach(exec => {
+                    const date = new Date(exec.execution_date).toLocaleDateString('pt-BR');
+                    const exerciseName = exec.exercise ? exec.exercise.name : "Exercício removido";
+
+                    // Dor (pegar a maior ou média, aqui pegando a primeira se houver)
+                    const dor = exec.pain_levels.length > 0 ? exec.pain_levels[0].pain_level : "-";
+
+                    // Feedback
+                    const fb = exec.feedbacks.length > 0 ? exec.feedbacks[0].content : "-";
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${exerciseName}</td>
+                            <td>${exec.was_completed ? '<span class="badge badge-green">Concluído</span>' : '<span class="badge badge-gray">Incompleto</span>'}</td>
+                            <td>${dor}</td>
+                            <td style="font-size:0.85rem; color:#64748b; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${fb}</td>
+                        </tr>
+                    `;
+                });
+
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = `<tr><td colspan="5">Erro de conexão</td></tr>`;
+            }
+        }
+
+        function renderizarGrafico(executions) {
+            const ctx = document.getElementById('chartProgresso');
+            if (chartInstance) chartInstance.destroy();
+
+            // Preparar dados: dor por data
+            // Ordenar por data (está desc, inverter para asc)
+            const sorted = [...executions].reverse();
+            const labels = sorted.map(e => new Date(e.execution_date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+            const dataDor = sorted.map(e => (e.pain_levels.length > 0 ? e.pain_levels[0].pain_level : null));
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Nível de Dor',
+                        data: dataDor,
+                        borderColor: '#dc2626',
+                        backgroundColor: '#fee2e2',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 10 }
+                    }
+                }
+            });
+        }
+
+        // Carregar inicial
+        document.addEventListener("DOMContentLoaded", () => carregarRelatorio('last_month'));
+    </script>
+</body>
+
+</html>

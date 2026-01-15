@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 # backend/app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,11 +22,12 @@ from app.api.routes_fisioterapeuta_db import router as fisioterapeuta_db_router
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title=settings.PROJECT_NAME)
+    app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
     origins = [
         "http://localhost:5173",
         "http://localhost:3000",
+        "http://127.0.0.1:5500",  # Common for VS Code Live Server
     ]
 
     app.add_middleware(

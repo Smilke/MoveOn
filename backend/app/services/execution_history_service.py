@@ -8,8 +8,12 @@ from app.models.pain_level import PainLevel
 from app.schemas.execution_history import (
     ExecutionHistoryItem,
     ExecutionStatus,
-    PeriodFilter
+    ExecutionHistoryItem,
+    ExecutionStatus,
+    PeriodFilter,
+    ExecutionCreate
 )
+from app.models.feedback import Feedback
 
 
 class ExecutionHistoryService:
@@ -150,3 +154,64 @@ class ExecutionHistoryService:
         total_executions = len(history_items)
         
         return history_items, period_start, period_end, total_executions
+
+    @staticmethod
+    def create_execution(
+        session: Session,
+        data: ExecutionCreate
+    ) -> ExerciseExecution:
+        """Registra uma nova execução de exercício"""
+        # 1. Buscar a prescrição para validar e pegar dados
+        prescription = session.get(Prescription, data.prescription_id)
+        if not prescription:
+            raise ValueError("Prescrição não encontrada")
+
+        # 2. Calcular taxa de conclusão (simplificado)
+        # Se completou o que foi pedido, 100%. Se não, regra de 3.
+        # Aqui vamos assumir que completion_rate vem calculado ou é 100% se marcado como completo
+        completion_rate = 100.0 if data.was_completed else 0.0
+        
+        # Se quiser algo mais refinado:
+        if prescription.series > 0 and data.series_completed > 0:
+             calc = (data.series_completed / prescription.series) * 100
+             if calc > 100: calc = 100.0
+             if calc > completion_rate: completion_rate = calc
+
+        # 3. Criar Execução
+        execution = ExerciseExecution(
+            prescription_id=data.prescription_id,
+            patient_id=prescription.patient_id,
+            repetitions_completed=data.repetitions_completed,
+            series_completed=data.series_completed,
+            duration_minutes=data.duration_minutes,
+            completion_rate=completion_rate,
+            was_completed=data.was_completed,
+            execution_date=datetime.utcnow()
+        )
+        session.add(execution)
+        session.commit()
+        session.refresh(execution)
+
+        # 4. Registrar Nível de Dor (se houver)
+        if data.pain_level is not None:
+            pain = PainLevel(
+                execution_id=execution.id,
+                pain_level=data.pain_level,
+                reported_at=datetime.utcnow()
+            )
+            session.add(pain)
+
+        # 5. Registrar Feedback (se houver)
+        if data.feedback_comment:
+            fb = Feedback(
+                execution_id=execution.id,
+                patient_id=prescription.patient_id,
+                content=data.feedback_comment,
+                feedback_type="neutral", # default
+                is_positive=True
+            )
+            session.add(fb)
+        
+        session.commit()
+        session.refresh(execution)
+        return execution

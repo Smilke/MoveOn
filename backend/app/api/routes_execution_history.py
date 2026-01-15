@@ -7,11 +7,33 @@ from app.core.database import get_session
 from app.services.execution_history_service import ExecutionHistoryService
 from app.schemas.execution_history import (
     ExecutionHistoryResponse,
-    PeriodFilter
+    ExecutionHistoryResponse,
+    PeriodFilter,
+    ExecutionCreate
 )
 from app.models.patient import Patient  # 👈 IMPORTANTE: pra validar se o paciente existe
 
 router = APIRouter()
+
+
+@router.post(
+    "/executions",
+    status_code=status.HTTP_201_CREATED,
+    summary="Registra uma execução de exercício",
+    description="Salva o histórico de execução de um exercício realizado pelo paciente"
+)
+def create_execution(
+    execution_data: ExecutionCreate,
+    session: Session = Depends(get_session)
+):
+    """Registra uma execução"""
+    try:
+        execution = ExecutionHistoryService.create_execution(session, execution_data)
+        return {"message": "Execução registrada com sucesso", "id": execution.id}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao registrar execução: {str(e)}")
 
 
 @router.get(

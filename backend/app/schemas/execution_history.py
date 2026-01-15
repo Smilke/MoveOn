@@ -18,6 +18,18 @@ class PeriodFilter(str, Enum):
     CUSTOM = "custom"
 
 
+class ExecutionCreate(BaseModel):
+    """Dados para registrar uma execução de exercício"""
+    prescription_id: int
+    repetitions_completed: int
+    series_completed: int
+    duration_minutes: Optional[int] = None
+    was_completed: bool = True
+    pain_level: Optional[int] = Field(None, ge=0, le=10)
+    feedback_comment: Optional[str] = None
+
+
+
 class ExerciseBasicInfo(BaseModel):
     """Informações básicas do exercício"""
     id: int

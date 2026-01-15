@@ -1,31 +1,36 @@
 from sqlmodel import SQLModel, create_engine, Session
 from app.core.config import settings
+from app.models import patient, physiotherapist, exercise_library, prescription, exercise_execution, pain_level, feedback
 
-# Importar todos os models para que sejam registrados no SQLModel.metadata
+# Url de conexão com o banco de dados
+# Se não estiver definido em settings, usa um arquivo local por padrão
+DATABASE_URL = getattr(settings, "DATABASE_URL", "sqlite:///./moveon_v3.db")
 
-from app.models import patient
-from app.models import physiotherapist
-from app.models import exercise_library
-from app.models import prescription
-from app.models import exercise_execution
-from app.models import pain_level
-
-
-# C
-#riar engine do banco de dados
+# Para SQLite é necessário connect_args={"check_same_thread": False}
 engine = create_engine(
-    settings.DATABASE_URL,
-    echo=True,  # Log SQL queries (pode desabilitar em produção)
-    pool_pre_ping=True,  # Verifica conexões antes de usar
+    DATABASE_URL, 
+    echo=False,
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
 )
 
-
-def init_db():
-    """Cria todas as tabelas no banco de dados"""
-    SQLModel.metadata.create_all(engine)
-
-
 def get_session():
-    """Dependency para obter sessão do banco de dados"""
+    """Dependência para obter uma sessão do banco de dados"""
     with Session(engine) as session:
         yield session
+
+def init_db():
+    from app.core.database import create_db_and_tables
+    create_db_and_tables()
+
+def create_db_and_tables():
+    """Cria as tabelas do banco de dados"""
+    # Importar modelos aqui para garantir que eles sejam registrados no SQLModel.metadata
+    from app.models.patient import Patient
+    from app.models.physiotherapist import Physiotherapist
+    from app.models.exercise_library import ExerciseLibrary
+    from app.models.prescription import Prescription
+    from app.models.exercise_execution import ExerciseExecution
+    from app.models.feedback import Feedback
+    from app.models.pain_level import PainLevel
+    
+    SQLModel.metadata.create_all(engine)
