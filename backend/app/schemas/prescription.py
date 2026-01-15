@@ -43,7 +43,7 @@ class PrescriptionCreate(BaseModel):
 
 
 class PrescriptionUpdate(BaseModel):
-    """Schema para atualização de prescrição"""
+    """Schema para atualização de prescrição (uso interno)"""
     repetitions: Optional[int] = Field(None, ge=1)
     series: Optional[int] = Field(None, ge=1)
     duration_minutes: Optional[int] = Field(None, ge=1)
@@ -53,6 +53,30 @@ class PrescriptionUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+class PrescriptionUpdateRequest(BaseModel):
+    """Schema para requisição de atualização de prescrição via API"""
+    repetitions: Optional[int] = Field(None, ge=1, description="Número de repetições")
+    series: Optional[int] = Field(None, ge=1, description="Número de séries")
+    duration_minutes: Optional[int] = Field(None, ge=1, description="Duração em minutos")
+    difficulty_level: Optional[str] = Field(None, max_length=50, description="Nível de dificuldade")
+    weekly_frequency: Optional[int] = Field(None, ge=1, description="Frequência semanal")
+    notes: Optional[str] = Field(None, description="Notas adicionais")
+    change_reason: Optional[str] = Field(None, description="Motivo da alteração (ex: 'Paciente relatou dor')")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "repetitions": 12,
+                "series": 4,
+                "duration_minutes": 20,
+                "difficulty_level": "advanced",
+                "weekly_frequency": 4,
+                "notes": "Paciente evoluindo bem",
+                "change_reason": "Paciente demonstrou melhora significativa no feedback"
+            }
+        }
+
+
 class ExerciseLibraryInfo(BaseModel):
     """Informações básicas do exercício"""
     id: int
@@ -60,6 +84,9 @@ class ExerciseLibraryInfo(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     difficulty: str
+    instructions: Optional[str] = None
+    video_url: Optional[str] = None
+    image_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -70,6 +97,45 @@ class PatientInfo(BaseModel):
     id: int
     name: str
     email: str
+
+    class Config:
+        from_attributes = True
+
+
+class PhysiotherapistInfo(BaseModel):
+    """Informações básicas do fisioterapeuta"""
+    id: int
+    name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
+class PrescriptionHistoryResponse(BaseModel):
+    """Schema de resposta do histórico de alterações"""
+    id: int
+    prescription_id: int
+    physiotherapist_id: int
+    
+    # Valores anteriores
+    old_repetitions: Optional[int] = None
+    old_series: Optional[int] = None
+    old_duration_minutes: Optional[int] = None
+    old_difficulty_level: Optional[str] = None
+    old_weekly_frequency: Optional[int] = None
+    
+    # Novos valores
+    new_repetitions: Optional[int] = None
+    new_series: Optional[int] = None
+    new_duration_minutes: Optional[int] = None
+    new_difficulty_level: Optional[str] = None
+    new_weekly_frequency: Optional[int] = None
+    
+    # Metadados
+    change_reason: Optional[str] = None
+    changed_at: datetime
+    changed_by: Optional[PhysiotherapistInfo] = None
 
     class Config:
         from_attributes = True

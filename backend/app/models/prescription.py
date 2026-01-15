@@ -1,7 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional
-from datetime import datetime
-
+from datetime import datetime, date
 
 class Prescription(SQLModel, table=True):
     """Prescrição de exercício para um paciente"""
@@ -26,8 +25,12 @@ class Prescription(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow, sa_column_kwargs={"onupdate": datetime.utcnow})
     
+    # Data específica
+    scheduled_date: Optional[date] = Field(default=None)
+
     # Relacionamentos
     patient: "Patient" = Relationship(back_populates="prescriptions")
     physiotherapist: "Physiotherapist" = Relationship(back_populates="prescriptions")
     exercise: "ExerciseLibrary" = Relationship()
     executions: list["ExerciseExecution"] = Relationship(back_populates="prescription")
+    history: list["PrescriptionHistory"] = Relationship(back_populates="prescription")
