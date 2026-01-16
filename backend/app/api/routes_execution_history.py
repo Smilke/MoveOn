@@ -11,8 +11,7 @@ from app.schemas.execution_history import (
     PeriodFilter,
     ExecutionCreate
 )
-from app.models.patient import Patient  # 👈 IMPORTANTE: pra validar se o paciente existe
-
+from app.models.patient import Patient  
 router = APIRouter()
 
 
@@ -65,7 +64,7 @@ def get_execution_history(
     - Se existir, retorna o histórico no período escolhido
       (ou mensagem avisando que não há dados).
     """
-    # ✅ 1) Verifica se o paciente existe no banco
+    # Verifica se o paciente existe no banco
     paciente = session.get(Patient, patient_id)
     if not paciente:
         raise HTTPException(
@@ -73,7 +72,7 @@ def get_execution_history(
             detail=f"Paciente com ID {patient_id} não encontrado."
         )
 
-    # ✅ 2) Se existe, segue para buscar o histórico normalmente
+    # Busca o histórico
     try:
         history_items, period_start, period_end, total_executions = (
             ExecutionHistoryService.get_execution_history_summary(

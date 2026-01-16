@@ -136,7 +136,6 @@
       el.className = "msg " + (type || "");
       el.textContent = text || "";
     }
-    // attach button handler (safer than inline onclick when HTML is injected)
     try {
       const btn = document.getElementById('loginBtn');
       if (btn) btn.addEventListener('click', fazerLogin);

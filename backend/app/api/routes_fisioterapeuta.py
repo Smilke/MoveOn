@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from app.core.database import get_session
 from app.core.security import hash_password
 from app.models.physiotherapist import Physiotherapist
-from repositorio_memoria import repo_fisio_memoria  # Mantido para compatibilidade se necessário
+from repositorio_memoria import repo_fisio_memoria
 
 router = APIRouter()
 

@@ -8,8 +8,7 @@ from cadastro_fisioterapeuta import cadastrar_fisioterapeuta, hash_senha
 
 class FakeRepositorioFisio:
     def __init__(self, existentes=None):
-        # existentes aqui vai ser uma lista de strings (cpfs OU emails),
-        # igual você já tava usando
+        # existentes: cpfs ou emails
         self.cpfs_existentes = set(existentes or [])
         self.emails_existentes = set(existentes or [])
         self.salvou = False
@@ -80,10 +79,10 @@ def test_deve_salvar_quando_dados_validos_e_sem_duplicidades():
     assert repo.salvou is True
     assert repo.ultimo_salvo is not None
 
-    # senha crua não deve ser salva
+    # Verificação de segurança da senha
     assert "senha" not in repo.ultimo_salvo
 
-    # senha_hash deve existir e ser o hash da senha informada
+    # Verificação do hash da senha
     assert "senha_hash" in repo.ultimo_salvo
     assert repo.ultimo_salvo["senha_hash"] == hash_senha("SenhaSuperSegura123")
 

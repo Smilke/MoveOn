@@ -30,7 +30,7 @@ async def upload_video(
         with dest.open("wb") as f:
             f.write(content)
 
-        # 1) Log imediato como "Pendente" (assim UI pode mostrar aguardando)
+        # Log status Pendente
         pending = {
             "ID_Paciente": patient_id,
             "ID_Exercicio": exercise_id,
@@ -47,7 +47,7 @@ async def upload_video(
         except Exception:
             pass
 
-        # 2) Rodar análise em segundo plano (não bloqueia a resposta)
+        # Análise em segundo plano
         try:
             runtime.submit_analysis(patient_id, exercise_id, str(dest), filename)
         except Exception:

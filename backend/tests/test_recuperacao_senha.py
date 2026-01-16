@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 
-# permite importar arquivos da pasta backend
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from recuperacao_senha import (
@@ -111,9 +110,9 @@ def test_redefinir_senha_atualiza_hash_e_invalida_token():
 
     assert erros == []
 
-    # token deve ter sido invalidado
+    # Verifica invalidação do token
     assert repo_tokens.obter_dados(token) is None
 
-    # senha_hash deve ter sido atualizada
+    # Atualização da senha
     paciente = repo_paciente._pacientes[0]
     assert paciente["senha_hash"] == hash_paciente(senha_nova)

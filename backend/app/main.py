@@ -1,12 +1,12 @@
 from contextlib import asynccontextmanager
-# backend/app/main.py
+# app/main.py
 from fastapi import FastAPI
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import init_db  # <<< IMPORTANTE
+from app.core.database import init_db
 
 from app.api.routes_health import router as health_router
 from app.api.routes_fisioterapeuta import router as fisioterapeuta_router
@@ -50,7 +50,7 @@ def create_app() -> FastAPI:
 
     api_prefix = settings.API_PREFIX
 
-    # rota raiz só pra sanity check
+    # Rota raiz
     @app.get("/")
     def root():
         return {"message": "API rodando", "project": settings.PROJECT_NAME}

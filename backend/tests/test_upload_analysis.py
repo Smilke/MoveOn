@@ -20,7 +20,6 @@ def fake_detect(self, video_path: str, joint: str = "knee"):
 
 
 def test_upload_and_analysis_endpoint(monkeypatch):
-    # patch the YOLOPoseWrapper.detect_joint_angles to avoid real model
     monkeypatch.setattr("app.analysis.processor.YOLOPoseWrapper.detect_joint_angles", fake_detect, raising=True)
 
     file_bytes = io.BytesIO(b"fake video content")

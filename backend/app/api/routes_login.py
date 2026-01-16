@@ -28,7 +28,7 @@ class LoginOut(BaseModel):
 
 @router.post("/login", response_model=LoginOut)
 def login(body: LoginIn, session: Session = Depends(get_session)):
-    # 1) tenta fisio
+    # Tenta fisioterapeuta
     fisio = session.exec(
         select(Physiotherapist).where(Physiotherapist.email == body.email)
     ).first()
@@ -54,7 +54,7 @@ def login(body: LoginIn, session: Session = Depends(get_session)):
             must_change_password=bool(getattr(fisio, "must_change_password", False)),
         )
 
-    # 2) tenta paciente
+    # Tenta paciente
     paciente = session.exec(
         select(Patient).where(Patient.email == body.email)
     ).first()

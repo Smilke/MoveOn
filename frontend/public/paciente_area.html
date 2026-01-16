@@ -125,7 +125,7 @@
     <div class="card">
       <div class="top">
         <div>
-          <h1>Olá, <span id="nome-paciente">Paciente</span> 👋</h1>
+          <h1>Olá, <span id="nome-paciente">Paciente</span></h1>
           <p class="sub">Bem-vindo ao seu painel de reabilitação</p>
         </div>
         <div class="row-actions" style="margin-top:0; display: flex; align-items: center; gap: 10px;">
@@ -174,7 +174,7 @@
         <div id="feedback-videos" style="margin-top: 10px;">
           <div id="feedback-videos-status"
             style="font-size: 0.9rem; color: #f59e42; display:none; align-items:center; gap:8px; margin-bottom:8px;">
-            <span style="font-size:1.2em">⏳</span> Seu vídeo está sendo analisado, o feedback aparecerá aqui em breve.
+            Seu vídeo está sendo analisado, o feedback aparecerá aqui em breve.
           </div>
           <div id="feedback-videos-none" style="font-size: 0.9rem; color: #9ca3af; display:none;">Nenhum vídeo pendente
             ou feedback encontrado.</div>
@@ -231,9 +231,9 @@
                                     ${p.series} séries de ${p.repetitions} repetições
                                 </p>
                             </div>
-                            <a href="/realizar_exercicio?prescription_id=${p.id}" class="btn btn-small">Começar ▶</a>
+                            <a href="/realizar_exercicio?prescription_id=${p.id}" class="btn btn-small">Começar</a>
                         </div>
-                        ${p.notes ? `<div style="margin-top:10px; font-size:0.85rem; color:#4b5563; background:#f9fafb; padding:8px; border-radius:8px">📝 ${p.notes}</div>` : ''}
+                        ${p.notes ? `<div style="margin-top:10px; font-size:0.85rem; color:#4b5563; background:#f9fafb; padding:8px; border-radius:8px">Obs: ${p.notes}</div>` : ''}
                     `;
           container.appendChild(el);
         });

@@ -18,7 +18,7 @@ class PhysiotherapistService:
         Cria um fisioterapeuta no banco garantindo CPF e e-mail únicos.
         """
 
-        # verifica se já existe CPF ou e-mail igual
+        # Verifica se já existe CPF ou e-mail igual
         existing = session.exec(
             select(Physiotherapist).where(
                 (Physiotherapist.cpf == data.cpf)
