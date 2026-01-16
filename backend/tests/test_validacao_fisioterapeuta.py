@@ -32,7 +32,7 @@ def test_cadastro_fisioterapeuta_nome_obrigatorio():
 def test_cadastro_fisioterapeuta_cpf_invalido():
     dados = {
         "nome": "Ana Silva",
-        "cpf": "1234",  #CPFinvalido
+        "cpf": "1234",
 
         "cnpj": "",
         "registro": "CREFITO 12345-F",
@@ -62,7 +62,7 @@ def test_cadastro_fisioterapeuta_email_obrigatorio():
         "cpf": "12345678901",
         "cnpj": "",
         "registro": "CREFITO 12345-F",
-        "email": "",  # VAZIO aqui
+        "email": "",
     }
     erros = validar_dados_fisioterapeuta(dados)
 
@@ -73,7 +73,7 @@ def test_cadastro_fisioterapeuta_registro_obrigatorio():
         "nome": "Ana Silva",
         "cpf": "12345678901",
         "cnpj": "",
-        "registro": "",  # vazio de propósito
+        "registro": "",
         "email": "ana@clinica.com",
     }
 
@@ -86,7 +86,7 @@ def test_cadastro_fisioterapeuta_registro_invalido():
         "nome": "Ana Silva",
         "cpf": "12345678901",
         "cnpj": "",
-        "registro": "12345",  # não tem CREFITO nem COFFITO
+        "registro": "12345",
         "email": "ana@clinica.com",
     }
 

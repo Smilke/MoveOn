@@ -49,7 +49,7 @@
 
                 <div class="hint"
                     style="background:#f0f9ff; border-color:#bae6fd; color:#0369a1; display:flex; gap:15px; align-items:center;">
-                    <span style="font-size:1.5rem">🎯</span>
+                    <span>Meta:</span>
                     <div>
                         <strong>Meta de hoje:</strong><br>
                         <span id="ex-meta">3 séries de 10 repetições</span>
@@ -91,7 +91,7 @@
                         <input type="file" id="video-upload" accept="video/*" style="width:100%; margin-bottom:10px">
                     </div>
                     <div class="full" style="margin-top:10px">
-                        <button class="btn" style="width:100%; padding:14px" onclick="salvarExecucao()">✅ Finalizar
+                        <button class="btn" style="width:100%; padding:14px" onclick="salvarExecucao()">Finalizar
                             Exercicio</button>
                     </div>
                 </div>
@@ -130,20 +130,19 @@
 
                 prescriptionData = data;
 
-                                // Vídeo de exemplo do exercício
-                                const videoWrap = document.getElementById("ex-video-wrap");
-                                if (data.exercise && data.exercise.example_video_url) {
-                                        const videoUrl = `${API_BASE}${data.exercise.example_video_url}`;
-                                        videoWrap.className = "";
-                                        videoWrap.style.marginBottom = "20px";
-                                        videoWrap.innerHTML = `
+                const videoWrap = document.getElementById("ex-video-wrap");
+                if (data.exercise && data.exercise.example_video_url) {
+                    const videoUrl = `${API_BASE}${data.exercise.example_video_url}`;
+                    videoWrap.className = "";
+                    videoWrap.style.marginBottom = "20px";
+                    videoWrap.innerHTML = `
                                             <video controls style="width:100%; border-radius:12px; background:#000" src="${videoUrl}"></video>
                                             <div style="margin-top:6px; font-size:0.85rem; color:#6b7280;">Vídeo de exemplo</div>
                                         `;
-                                } else {
-                                        videoWrap.className = "video-placeholder";
-                                        videoWrap.textContent = "📺 Video/Demonstração";
-                                }
+                } else {
+                    videoWrap.className = "video-placeholder";
+                    videoWrap.textContent = "📺 Video/Demonstração";
+                }
 
                 // Preencher tela
                 document.getElementById("ex-name").textContent = data.exercise.name;
@@ -191,7 +190,7 @@
                 });
 
                 if (resp.ok) {
-                    // Se houver vídeo, faz upload
+                    // Upload de vídeo se houver
                     if (videoFile) {
                         btn.textContent = "Enviando vídeo...";
                         const formData = new FormData();
@@ -210,7 +209,7 @@
                             alert("Execução salva, mas houve erro ao enviar o vídeo.");
                         }
                     } else {
-                        alert("Parabéns! Exercício registrado com sucesso. 🎉");
+                        alert("Parabéns! Exercício registrado com sucesso.");
                     }
                     window.location.href = "/paciente_area";
                 } else {
@@ -230,12 +229,12 @@
         document.addEventListener("DOMContentLoaded", carregarDetalhes);
     </script>
     <script>
-        (function(){
-            document.querySelectorAll('a[href$=".html"]').forEach(a=>{
+        (function () {
+            document.querySelectorAll('a[href$=".html"]').forEach(a => {
                 const href = a.getAttribute('href');
                 if (!href.match(/^https?:\/\//)) {
-                    const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
-                    a.setAttribute('href','/' + p);
+                    const p = href.replace(/^(?:\.\/|\/)*/, '').replace(/\.html$/, '');
+                    a.setAttribute('href', '/' + p);
                 }
             });
         })();

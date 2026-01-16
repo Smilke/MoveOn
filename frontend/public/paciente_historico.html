@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <title>Histórico de Exercícios - MoveOn</title>
@@ -10,14 +11,17 @@
       background: #f3f4f6;
       color: #111827;
     }
+
     .page {
       max-width: 960px;
       margin: 40px auto;
       padding: 0 16px 80px;
     }
+
     header {
       margin-bottom: 24px;
     }
+
     .top-link {
       display: inline-block;
       margin-bottom: 8px;
@@ -25,13 +29,16 @@
       color: #4b5563;
       text-decoration: none;
     }
+
     .top-link:hover {
       text-decoration: underline;
     }
+
     h1 {
       font-size: 1.8rem;
       margin: 0 0 4px 0;
     }
+
     p.sub {
       margin: 0;
       color: #6b7280;
@@ -43,9 +50,11 @@
       font-size: 0.9rem;
       color: #4b5563;
     }
+
     .auth-info span.nome {
       font-weight: 600;
     }
+
     .btn-sair {
       margin-top: 6px;
       padding: 6px 12px;
@@ -56,6 +65,7 @@
       font-size: 0.8rem;
       cursor: pointer;
     }
+
     .btn-sair:hover {
       background: #fecaca;
     }
@@ -76,12 +86,14 @@
       margin-top: 12px;
       margin-bottom: 16px;
     }
+
     .filtros label {
       font-size: 0.85rem;
       color: #374151;
       display: block;
       margin-bottom: 4px;
     }
+
     .filtros select,
     .filtros input {
       padding: 8px 10px;
@@ -89,9 +101,11 @@
       border: 1px solid #d1d5db;
       font-size: 0.9rem;
     }
+
     .filtros input[type="date"] {
       min-width: 150px;
     }
+
     .btn-primary {
       padding: 9px 16px;
       border-radius: 999px;
@@ -102,6 +116,7 @@
       font-size: 0.9rem;
       cursor: pointer;
     }
+
     .btn-primary:hover {
       background: #1d4ed8;
     }
@@ -110,8 +125,14 @@
       font-size: 0.9rem;
       margin-top: 8px;
     }
-    .msg.err { color: #dc2626; }
-    .msg.ok  { color: #16a34a; }
+
+    .msg.err {
+      color: #dc2626;
+    }
+
+    .msg.ok {
+      color: #16a34a;
+    }
 
     .resumo {
       font-size: 0.9rem;
@@ -126,15 +147,18 @@
       margin-bottom: 8px;
       background: #f9fafb;
     }
+
     .exec-item strong.titulo {
       display: block;
       font-size: 0.95rem;
       margin-bottom: 2px;
     }
+
     .exec-item small {
       color: #6b7280;
       font-size: 0.8rem;
     }
+
     .exec-item .linha {
       font-size: 0.85rem;
       margin-top: 4px;
@@ -148,23 +172,13 @@
     }
   </style>
 </head>
+
 <body>
   <div class="page">
     <header>
       <a href="/paciente_area" class="top-link">← Voltar para área do paciente</a>
       <h1>Histórico de exercícios</h1>
       <p class="sub">
-    <script>
-      (function(){
-        document.querySelectorAll('a[href$=".html"]').forEach(a=>{
-          const href = a.getAttribute('href');
-          if (!href.match(/^https?:\/\//)) {
-            const p = href.replace(/^(?:\.\/|\/)*/,'').replace(/\.html$/,'');
-            a.setAttribute('href','/' + p);
-          }
-        });
-      })();
-    </script>
         Veja as execuções registradas dos exercícios prescritos para você, com período filtrado.
       </p>
       <div class="auth-info">
@@ -213,10 +227,6 @@
 
       <div id="lista-execucoes"></div>
     </section>
-
-    <footer>
-      Protótipo de navegação — uso interno do time MoveOn.
-    </footer>
   </div>
 
   <script>
@@ -276,7 +286,6 @@
         return;
       }
 
-      // Aqui tentamos usar tanto "id" quanto "patient_id" para ser mais robusto
       const patientId = usuario.id || usuario.patient_id;
       if (!patientId) {
         msgEl.textContent = "Não foi possível identificar seu ID de paciente.";
@@ -299,8 +308,6 @@
           resumoEl.textContent = "Período personalizado incompleto.";
           return;
         }
-
-        // Montar ISO simples (sem hora, deixa o backend tratar)
         params.append("start_date", dataInicio + "T00:00:00");
         params.append("end_date", dataFim + "T23:59:59");
       }
@@ -323,7 +330,6 @@
 
         const data = await resp.json();
 
-        // Atualiza resumo do período
         const inicio = data.period_start ? new Date(data.period_start) : null;
         const fim = data.period_end ? new Date(data.period_end) : null;
 
@@ -335,16 +341,14 @@
               month: "2-digit",
               year: "numeric",
             });
-          textoPeriodo = `Período: ${fmt(inicio)} até ${fmt(fim)} | Execuções registradas: ${
-            data.total_executions ?? 0
-          }`;
+          textoPeriodo = `Período: ${fmt(inicio)} até ${fmt(fim)} | Execuções registradas: ${data.total_executions ?? 0
+            }`;
         } else {
           textoPeriodo = `Execuções registradas: ${data.total_executions ?? 0}`;
         }
 
         resumoEl.textContent = textoPeriodo;
 
-        // Se não tiver dados
         if (!data.has_data) {
           listaEl.innerHTML = "";
           const p = document.createElement("p");
@@ -354,7 +358,6 @@
           return;
         }
 
-        // Renderizar execuções
         listaEl.innerHTML = "";
         const execucoes = data.executions || [];
 
@@ -368,12 +371,12 @@
 
           const dataFormatada = dataExec
             ? dataExec.toLocaleString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
             : "-";
 
           const nomeExercicio =
@@ -387,12 +390,40 @@
             (item.was_completed === true
               ? "Concluído"
               : item.completion_rate && item.completion_rate > 0
-              ? "Parcial"
-              : "Não concluído");
+                ? "Parcial"
+                : "Não concluído");
 
           const dor =
             item.pain_level !== undefined && item.pain_level !== null
               ? `${item.pain_level}/10`
               : "-";
 
-          const localDor
+          const localDor = item.pain_location || "-";
+
+          div.innerHTML = `
+            <strong class="titulo">${nomeExercicio}</strong>
+            <small>${dataFormatada}</small>
+            <div class="linha">
+              <b>Status:</b> ${status} | <b>Dor:</b> ${dor} | <b>Local:</b> ${localDor}
+            </div>
+            ${item.notes ? `<div class="linha"><i>Obs: ${item.notes}</i></div>` : ""}
+          `;
+          listaEl.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Erro inesperado ao buscar histórico:", err);
+        msgEl.textContent = "Erro inesperado ao carregar histórico.";
+        msgEl.classList.add("err");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      atualizarHeader();
+      atualizarHabilitacaoDatas();
+      document.getElementById("periodo").addEventListener("change", atualizarHabilitacaoDatas);
+      carregarHistorico();
+    });
+  </script>
+</body>
+
+</html>

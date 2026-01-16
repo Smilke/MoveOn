@@ -15,7 +15,7 @@ from repositorio_memoria import repo_notificacao_memoria
 router = APIRouter()
 
 class MetaIn(BaseModel):
-    patient_id: str  # Can be ID or CPF
+    patient_id: str
     physiotherapist_id: int
     description: str
     success_criteria: Optional[str] = None

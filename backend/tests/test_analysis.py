@@ -16,7 +16,7 @@ def test_compute_angle_simple_right_triangle():
     b = (0.0, 0.0)
     c = (0.0, 1.0)
     angle = rules.compute_angle(a, b, c)
-    # angle at origin between (1,0) and (0,1) should be 90 degrees
+    # angle at origin
     assert pytest.approx(angle, rel=1e-2) == 90.0
 
 
@@ -49,7 +49,7 @@ def test_analyze_video_integration_success_and_failure():
     assert feedback["ID_Exercicio"] == "ex1"
     assert feedback["Status_Execucao"] == "Sucesso"
     assert feedback["Repetitions"] >= 2
-    # should include rep details
+    # Repetition details
     assert "Rep_Details" in feedback
     assert len(feedback["Rep_Details"]) >= 2
     for rep in feedback["Rep_Details"]:

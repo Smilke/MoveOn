@@ -11,7 +11,7 @@ from app.models.physiotherapist import Physiotherapist
 router = APIRouter()
 
 
-# ===== SCHEMA DE ENTRADA =====
+
 class PacienteIn(BaseModel):
     nome: str
     cpf: str
@@ -22,13 +22,13 @@ class PacienteIn(BaseModel):
     fisioterapeuta_cpf: str
 
 
-# ===== CADASTRAR PACIENTE =====
+
 @router.post("/pacientes", status_code=status.HTTP_201_CREATED)
 def criar_paciente(
     body: PacienteIn,
     session: Session = Depends(get_session)
 ):
-    # 1️⃣ Buscar fisioterapeuta pelo CPF
+    # Buscar fisioterapeuta pelo CPF
     fisio = session.exec(
         select(Physiotherapist).where(
             Physiotherapist.cpf == body.fisioterapeuta_cpf
@@ -41,7 +41,7 @@ def criar_paciente(
             detail="Fisioterapeuta com esse CPF não encontrado."
         )
 
-    # 2️⃣ Verificar e-mail duplicado
+    # Verificar e-mail duplicado
     paciente_existente = session.exec(
         select(Patient).where(Patient.email == body.email)
     ).first()
@@ -52,7 +52,7 @@ def criar_paciente(
             detail="Já existe paciente cadastrado com esse e-mail."
         )
 
-    # 3️⃣ Criar paciente
+    # Criar paciente
     paciente = Patient(
         name=body.nome,
         email=body.email,
@@ -72,7 +72,7 @@ def criar_paciente(
     }
 
 
-# ===== LISTAR PACIENTES DO FISIO =====
+
 @router.get("/fisioterapeutas/{cpf}/pacientes")
 def listar_pacientes_do_fisio(
     cpf: str,

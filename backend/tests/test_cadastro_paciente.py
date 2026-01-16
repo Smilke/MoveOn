@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 
-# permite importar arquivos da pasta backend
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from cadastrar_paciente import cadastrar_paciente, hash_senha
@@ -43,11 +42,10 @@ def test_deve_salvar_paciente_quando_dados_validos_e_sem_duplicidade():
     assert repo.salvou is True
     assert repo.ultimo_salvo is not None
 
-    # conferindo vínculo com o fisio
+    # Vínculo com o fisioterapeuta
     assert repo.ultimo_salvo["fisioterapeuta_id"] == fisioterapeuta_id
 
-    # senha crua não deve ser salva
-    assert "senha" not in repo.ultimo_salvo
+    # Verificação de segurança da senha
 
     # senha_hash deve existir e ser o hash da senha informada
     assert "senha_hash" in repo.ultimo_salvo

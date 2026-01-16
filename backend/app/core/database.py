@@ -5,8 +5,7 @@ from sqlalchemy import text
 
 from app.core.security import hash_password
 
-# Url de conexão com o banco de dados
-# Se não estiver definido em settings, usa um arquivo local por padrão
+# Configuração do banco de dados
 DATABASE_URL = getattr(settings, "DATABASE_URL", "sqlite:///./moveon_v3.db")
 
 # Para SQLite é necessário connect_args={"check_same_thread": False}

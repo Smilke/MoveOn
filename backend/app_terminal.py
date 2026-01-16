@@ -89,7 +89,7 @@ def cadastrar_paciente_terminal(
     print("\n=== Cadastro de Paciente ===")
     cpf_fisio = input("CPF do fisioterapeuta responsável: ").strip()
 
-    # garante que o paciente vai ser vinculado a um fisio que EXISTE
+
     if not repo_fisio.existe_cpf(cpf_fisio):
         print("\n⚠ Fisioterapeuta não encontrado. Cadastre o fisioterapeuta primeiro.")
         return
@@ -106,7 +106,7 @@ def cadastrar_paciente_terminal(
         "situacao": situacao,
     }
 
-    # aqui usamos o CPF do fisio como identificador (fisioterapeuta_id)
+
     erros = cadastrar_paciente(dados_paciente, cpf_fisio, repo_paciente)
 
     if erros:

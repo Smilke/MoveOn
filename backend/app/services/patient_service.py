@@ -13,7 +13,7 @@ class PatientService:
     def create_patient(session: Session, data: PatientCreate) -> Patient:
         """Cria um paciente no banco, garantindo e-mail único."""
 
-        # verifica se já existe paciente com esse e-mail
+        # Verifica se já existe paciente com esse e-mail
         existing = session.exec(
             select(Patient).where(Patient.email == data.email)
         ).first()
