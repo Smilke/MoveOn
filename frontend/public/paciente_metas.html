@@ -327,21 +327,31 @@
           const statusOptions = ["ativa", "em_andamento", "concluida"];
 
           div.innerHTML = `
-            <div><strong>ID:</strong> ${meta.id}</div>
-            <div><strong>Descrição:</strong> ${meta.description || ""}</div>
-            <div><strong>Status atual:</strong> ${meta.status}</div>
-            <div style="margin-top: 6px;">
-              <label for="${selectId}">Novo status: </label>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: #1e40af; margin-bottom: 4px;">${meta.description || "Sem descrição"}</div>
+                ${meta.success_criteria ? `<div style="margin-bottom: 8px; color: #4b5563;"><strong>Critério de sucesso:</strong> ${meta.success_criteria}</div>` : ''}
+                <div style="display:flex; gap:16px; font-size: 0.8rem; color: #6b7280; margin-bottom: 8px;">
+                  <span><strong>Início:</strong> ${meta.start_date ? new Date(meta.start_date).toLocaleDateString('pt-BR') : '-'}</span>
+                  <span><strong>Fim previsto:</strong> ${meta.end_date ? new Date(meta.end_date).toLocaleDateString('pt-BR') : '-'}</span>
+                </div>
+              </div>
+              <div style="background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                ${meta.status.replace('_', ' ')}
+              </div>
+            </div>
+            
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb; display: flex; align-items: center; gap: 10px;">
+              <label for="${selectId}" style="font-size: 0.85rem;">Mudar status: </label>
               <select id="${selectId}">
                 ${statusOptions
               .map(
                 (s) =>
-                  `<option value="${s}" ${s === meta.status ? "selected" : ""
-                  }>${s}</option>`
+                  `<option value="${s}" ${s === meta.status ? "selected" : ""}>${s.replace('_', ' ')}</option>`
               )
               .join("")}
               </select>
-              <button class="btn-primary" style="margin-left: 4px;"
+              <button class="btn-primary" style="padding: 4px 12px; font-size: 0.8rem;"
                 onclick="atualizarStatusMeta(${meta.id})">
                 Atualizar
               </button>
